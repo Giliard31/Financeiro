@@ -1,1271 +1,841 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-  <meta name="theme-color" content="#090d16">
-  <meta name="description" content="Controle financeiro com menu gaveta mobile, gestão admin e chat interativo.">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Meu Controle">
-  <title>Meu Controle Financeiro</title>
-
-  <!-- PWA Manifest -->
-  <link rel="manifest" href='data:application/manifest+json,{"name":"Meu Controle Financeiro","short_name":"MeuControle","start_url":".","display":"standalone","background_color":"#090d16","theme_color":"#090d16","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/2953/2953363.png","sizes":"512x512","type":"image/png"}]}'>
-
-  <!-- Firebase SDKs (Compat) -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Finanças Pro</title>
   
-  <!-- Chart.js + DataLabels -->
+  <meta name="theme-color" content="#1e40af">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3135/3135706.png">
+  <link rel="manifest" id="manifest-placeholder">
+
+  <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap');
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, deleteDoc, onSnapshot, doc, setDoc, updateDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-    :root {
-      --bg: #090d16;
-      --navy: #0f172a;
-      --card-bg: #111827;
-      --card-border: #1f293d;
-      --text-main: #f3f4f6;
-      --text-muted: #9ca3af;
-      --green: #10b981;
-      --green-glow: rgba(16, 185, 129, 0.15);
-      --red: #ef4444;
-      --red-glow: rgba(239, 68, 68, 0.15);
-      --accent: #6366f1;
-      --accent-hover: #4f46e5;
-      --purple: #8b5cf6;
-    }
-
-    * { box-sizing: border-box; }
-    body { margin: 0; background: var(--bg); color: var(--text-main); font-family: 'DM Sans', sans-serif; overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
-
-    /* AUTH SCREEN */
-    #auth-screen {
-      position: fixed; inset: 0; background: var(--bg); display: grid; place-items: center; z-index: 9999; padding: 16px;
-    }
-    .auth-card {
-      background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 20px; padding: 24px; width: min(380px, 100%); box-shadow: 0 25px 50px rgba(0,0,0,0.5);
-    }
-    .auth-card h2 { font: 800 20px 'Manrope', sans-serif; margin: 0 0 6px; }
-    .auth-card p { font-size: 11px; color: var(--text-muted); margin: 0 0 16px; line-height: 1.4; }
-    .auth-card label { display: block; font-size: 11px; font-weight: 700; color: var(--text-muted); margin: 12px 0 4px; }
-    .auth-card input {
-      width: 100%; border: 1px solid var(--card-border); border-radius: 10px; padding: 12px; font: 500 14px 'DM Sans', sans-serif; color: var(--text-main); background: var(--navy); outline: none;
-    }
-    .auth-card input:focus { border-color: var(--accent); }
-    
-    .auth-btn {
-      margin-top: 18px; width: 100%; border: 0; border-radius: 10px; background: var(--accent); color: #fff; padding: 12px; font: 700 12px 'DM Sans', sans-serif; cursor: pointer; transition: background 0.15s ease, transform 0.1s ease;
-    }
-    .auth-btn:active { background: #10b981 !important; transform: scale(0.98); }
-    .auth-switch { text-align: center; font-size: 11px; color: var(--text-muted); margin-top: 14px; cursor: pointer; text-decoration: underline; }
-
-    /* APP SHELL & MOBILE DRAWER MENU */
-    .app-shell { min-height: 100vh; display: flex; flex-direction: column; }
-    
-    #sidebar-overlay {
-      position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(3px); z-index: 150; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
-    }
-    #sidebar-overlay.active { opacity: 1; pointer-events: auto; }
-
-    .sidebar {
-      width: 270px; background: var(--navy); border-right: 1px solid var(--card-border); color: white; position: fixed; inset: 0 auto 0 0; padding: 20px 16px; display: flex; flex-direction: column; z-index: 200; transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 10px 0 30px rgba(0,0,0,0.5);
-    }
-    .sidebar.open { transform: translateX(0); }
-
-    .brand { display: flex; align-items: center; justify-content: space-between; padding: 0 4px 20px; border-bottom: 1px solid var(--card-border); margin-bottom: 16px; }
-    .brand-info { display: flex; align-items: center; gap: 10px; }
-    .brand-mark {
-      width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, #10b981, #059669); color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 16px;
-    }
-    .brand strong { display: block; font: 800 14px 'Manrope', sans-serif; }
-    .brand small { font-size: 8px; letter-spacing: 1.5px; color: var(--text-muted); }
-    .close-drawer-btn { border: 0; background: transparent; color: var(--text-muted); font-size: 20px; cursor: pointer; padding: 4px; }
-
-    .side-label { font-size: 9px; letter-spacing: 1px; color: var(--text-muted); padding: 0 8px 8px; font-weight: 700; margin-top: 8px; }
-    .nav-item {
-      color: var(--text-muted); text-decoration: none; padding: 12px 14px; border-radius: 10px; margin: 3px 0; font-size: 13px; font-weight: 500; display: flex; gap: 10px; align-items: center; cursor: pointer; transition: all 0.2s;
-    }
-    .nav-item:hover, .nav-item:active { background: rgba(255,255,255,0.05); color: #fff; }
-    .nav-item.active { background: var(--accent); color: #fff; font-weight: 700; }
-
-    .sidebar-bottom { margin-top: auto; border-top: 1px solid var(--card-border); padding-top: 14px; }
-    .user-info { font-size: 11px; color: var(--text-main); font-weight: 700; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .logout-link { font-size: 11px; color: var(--red); cursor: pointer; display: inline-block; margin-top: 6px; font-weight: 600; }
-
-    /* CABEÇALHO MOBILE */
-    .mobile-header {
-      background: var(--navy); border-bottom: 1px solid var(--card-border); padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 90;
-    }
-    .menu-hamburger-btn {
-      border: 1px solid var(--card-border); background: var(--card-bg); color: var(--text-main); border-radius: 8px; padding: 8px 12px; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;
-    }
-    .mobile-title { font: 800 15px 'Manrope', sans-serif; display: flex; align-items: center; gap: 8px; }
-
-    /* ÁREA PRINCIPAL */
-    .main { padding: 16px 14px 30px; max-width: 1600px; width: 100%; margin: 0 auto; }
-    .topbar { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
-    .eyebrow { font-size: 9px; letter-spacing: 1.5px; font-weight: 800; color: var(--accent); margin: 0 0 4px; }
-    .topbar h1 { font: 800 20px 'Manrope', sans-serif; margin: 0; }
-    .subheading { color: var(--text-muted); font-size: 11px; margin: 2px 0 0; }
-
-    .tab-section { display: none; }
-    .tab-section.active { display: block; }
-
-    .summary-grid { display: grid; grid-template-columns: 1fr; gap: 10px; transition: all 0.3s ease; }
-    .summary-grid.hidden-values { display: none !important; }
-    
-    .summary-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; padding: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-    .balance-card { background: linear-gradient(135deg, #1e1b4b, #0f172a); border-color: #312e81; }
-    .card-top { display: flex; justify-content: space-between; align-items: center; color: var(--text-muted); font-size: 10px; }
-    .icon-bubble { width: 26px; height: 26px; border-radius: 8px; background: rgba(255,255,255,0.05); display: grid; place-items: center; font-size: 13px; }
-    .icon-bubble.green { background: var(--green-glow); color: var(--green); }
-    .icon-bubble.red { background: var(--red-glow); color: var(--red); }
-    .big-value { display: block; font: 800 22px 'Manrope', sans-serif; margin: 8px 0 2px; }
-    .metric { display: block; font: 800 18px 'Manrope', sans-serif; margin: 8px 0 2px; }
-    .green-text { color: var(--green); } .red-text { color: var(--red); }
-
-    .entry-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 14px 0; }
-    .action-card {
-      border: 1px solid var(--card-border); background: var(--card-bg); border-radius: 12px; padding: 12px 10px; display: flex; align-items: center; gap: 8px; text-align: left; cursor: pointer; color: var(--text-main);
-    }
-    .action-card.disabled { opacity: 0.4; cursor: not-allowed; }
-    .income-action { border-left: 3px solid var(--green); }
-    .expense-action { border-left: 3px solid var(--red); }
-    .action-icon { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; font-size: 15px; font-weight: 700; flex-shrink: 0; }
-    .income-action .action-icon { background: var(--green-glow); color: var(--green); }
-    .expense-action .action-icon { background: var(--red-glow); color: var(--red); }
-    .action-card b { display: block; font-size: 11px; }
-    .action-card small { display: block; font-size: 8px; color: var(--text-muted); margin-top: 1px; }
-
-    .content-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
-    .panel { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; padding: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-    .panel-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
-    .panel-heading h2 { font: 800 13px 'Manrope', sans-serif; margin: 0; }
-    .panel-heading p { font-size: 10px; color: var(--text-muted); margin: 2px 0 0; }
-    .mini-tag { font-size: 8px; letter-spacing: 0.5px; color: var(--accent); background: rgba(99,102,241,0.1); padding: 3px 6px; border-radius: 4px; font-weight: 700; }
-
-    .chart-wrap { height: 200px; width: 100%; margin: 10px auto 2px; position: relative; }
-    .chart-center { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; pointer-events: none; }
-    .chart-center strong { font: 800 13px 'Manrope', sans-serif; }
-    .chart-center small { font-size: 7px; letter-spacing: 0.5px; color: var(--text-muted); margin-top: 1px; }
-
-    .legend { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; margin-top: 10px; }
-    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--text-muted); }
-    .legend-dot { width: 6px; height: 6px; border-radius: 50%; flex: none; }
-    .legend-item b { margin-left: auto; color: var(--text-main); font-size: 10px; }
-    .empty-legend { grid-column: 1/-1; text-align: center; font-size: 10px; color: var(--text-muted); padding: 6px; }
-
-    .payment-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 14px 0; }
-    .payment-box { border-radius: 10px; padding: 10px; }
-    .paid-box { background: var(--green-glow); border: 1px solid rgba(16,185,129,0.2); }
-    .pending-box { background: var(--red-glow); border: 1px solid rgba(239,68,68,0.2); }
-    .payment-symbol { font-size: 12px; font-weight: 800; }
-    .paid-box .payment-symbol, .paid-box strong { color: var(--green); }
-    .pending-box .payment-symbol, .pending-box strong { color: var(--red); }
-    .payment-box small { display: block; font-size: 9px; color: var(--text-muted); margin: 3px 0 1px; }
-    .payment-box strong { font: 800 15px 'Manrope', sans-serif; }
-
-    .progress-heading { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted); margin-bottom: 4px; }
-    .progress-track { height: 6px; border-radius: 6px; background: rgba(255,255,255,0.05); overflow: hidden; }
-    .progress-fill { height: 100%; width: 0%; background: var(--green); border-radius: 6px; }
-    .helper-note { font-size: 9px; line-height: 1.3; color: var(--text-muted); margin: 10px 0 0; }
-
-    /* EXTRATO NA VISÃO GERAL */
-    .mini-extrato { margin-top: 14px; }
-    .extrato-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 11px; }
-    .extrato-left { display: flex; align-items: center; gap: 8px; }
-    .extrato-icon { width: 22px; height: 22px; border-radius: 6px; display: grid; place-items: center; font-size: 10px; font-weight: 700; }
-    .extrato-icon.income { background: var(--green-glow); color: var(--green); }
-    .extrato-icon.expense { background: var(--red-glow); color: var(--red); }
-    .extrato-title { font-weight: 600; color: var(--text-main); display: block; }
-    .extrato-sub { font-size: 8px; color: var(--text-muted); display: block; }
-
-    .history-panel { margin-top: 16px; }
-    .history-heading { align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }
-    .history-tools { display: flex; gap: 6px; width: 100%; }
-    .history-tools select {
-      flex: 1; border: 1px solid var(--card-border); border-radius: 8px; background: var(--navy); padding: 8px; color: var(--text-main); font: 500 11px 'DM Sans', sans-serif; outline: none;
-    }
-
-    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    table { width: 100%; border-collapse: collapse; min-width: 500px; }
-    th { text-align: left; font-size: 8px; letter-spacing: 1px; color: var(--text-muted); font-weight: 700; padding: 10px 8px; border-bottom: 1px solid var(--card-border); }
-    td { padding: 11px 8px; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 11px; color: var(--text-muted); }
-    .description-cell { font-weight: 600; color: var(--text-main); }
-    .type-icon { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 6px; margin-right: 6px; font-weight: 700; font-size: 10px; }
-    .type-icon.expense { background: var(--red-glow); color: var(--red); }
-    .type-icon.income { background: var(--green-glow); color: var(--green); }
-    .category-pill { background: rgba(255,255,255,0.05); padding: 3px 6px; border-radius: 5px; font-size: 9px; color: var(--text-main); }
-    .value-expense { color: var(--red); font-weight: 700; } .value-income { color: var(--green); font-weight: 700; }
-    .paid-badge, .pending-badge { font-size: 8px; font-weight: 700; padding: 3px 6px; border-radius: 5px; white-space: nowrap; }
-    .paid-badge { color: var(--green); background: var(--green-glow); }
-    .pending-badge { color: #f59e0b; background: rgba(245,158,11,0.15); }
-    .status-btn, .delete-btn { border: 0; background: transparent; cursor: pointer; padding: 4px; border-radius: 5px; }
-    .status-btn { color: var(--text-muted); font-size: 13px; }
-    .delete-btn { color: var(--text-muted); font-size: 14px; }
-
-    /* ADMIN PANEL */
-    .admin-panel { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; padding: 16px; margin-bottom: 16px; }
-    .user-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 11px; flex-wrap: wrap; gap: 8px; }
-    .user-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-    .user-controls label { display: flex; align-items: center; gap: 4px; cursor: pointer; font-size: 10px; }
-    .checkbox-liberar, .checkbox-admin { width: 15px; height: 15px; cursor: pointer; }
-
-    /* COMPARATIVO & POUPANÇA */
-    .compare-cards { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 16px; }
-    .compare-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; padding: 14px; }
-    .compare-card small { display: block; font-size: 9px; color: var(--text-muted); margin-bottom: 4px; }
-    .compare-card strong { font: 800 18px 'Manrope', sans-serif; display: block; }
-    .compare-card span { font-size: 10px; font-weight: 700; margin-top: 2px; display: inline-block; }
-
-    .savings-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 16px; }
-    .savings-card { background: linear-gradient(135deg, #2e1065, #0f172a); border: 1px solid #581c87; border-radius: 14px; padding: 16px; }
-    .savings-card small { color: #d8b4fe; font-size: 10px; }
-    .savings-card strong { font: 800 22px 'Manrope', sans-serif; color: #fff; margin: 6px 0; display: block; }
-
-    /* CHAT WIDGET */
-    #chat-widget { position: fixed; bottom: 16px; right: 16px; z-index: 1000; }
-    #chat-toggle-btn {
-      background: var(--accent); color: #fff; border: 0; width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; font-size: 20px; cursor: pointer; box-shadow: 0 4px 15px rgba(99,102,241,0.4); position: relative;
-    }
-    .chat-badge { position: absolute; top: -3px; right: -3px; background: var(--red); color: #fff; font-size: 10px; font-weight: 800; width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; border: 2px solid var(--bg); box-shadow: 0 2px 6px rgba(0,0,0,0.5); }
-    .online-indicator { width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); display: inline-block; margin-right: 6px; }
-    .online-indicator.online { background: var(--green); box-shadow: 0 0 6px var(--green); }
-
-    #chat-box {
-      position: absolute; bottom: 58px; right: 0; width: min(320px, calc(100vw - 32px)); height: 380px; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; display: flex; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.5); overflow: hidden; display: none;
-    }
-    .chat-header { background: var(--navy); padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--card-border); }
-    .chat-header h4 { margin: 0; font-size: 11px; font-weight: 700; display: flex; align-items: center; }
-    .chat-messages { flex: 1; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; font-size: 11px; }
-    
-    .chat-msg-row { display: flex; align-items: center; gap: 6px; width: 100%; }
-    .chat-msg-row.sent { justify-content: flex-end; }
-    .chat-msg-row.received { justify-content: flex-start; }
-    
-    .chat-msg { max-width: 80%; padding: 8px 10px; border-radius: 10px; line-height: 1.3; word-break: break-word; font-size: 11px; position: relative; }
-    .chat-msg-row.sent .chat-msg { background: var(--accent); color: #fff; border-bottom-right-radius: 2px; }
-    .chat-msg-row.received .chat-msg { background: var(--navy); color: var(--text-main); border-bottom-left-radius: 2px; border: 1px solid var(--card-border); }
-    
-    .chat-msg-sender { font-size: 8px; font-weight: 700; color: var(--green); margin-bottom: 2px; }
-    .msg-del-btn { border: 0; background: transparent; color: var(--text-muted); cursor: pointer; font-size: 12px; padding: 2px 4px; opacity: 0.7; }
-    .msg-del-btn:hover { color: var(--red); opacity: 1; }
-
-    .chat-input-area { padding: 8px; background: var(--navy); border-top: 1px solid var(--card-border); display: flex; gap: 6px; }
-    .chat-input-area input { flex: 1; border: 1px solid var(--card-border); border-radius: 6px; padding: 8px; font-size: 11px; background: var(--card-bg); color: var(--text-main); outline: none; }
-    .chat-send-btn { background: var(--accent); color: #fff; border: 0; padding: 0 12px; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 11px; }
-
-    /* PWA BANNER */
-    .pwa-banner { background: linear-gradient(135deg, #312e81, #1e1b4b); border: 1px solid #4338ca; border-radius: 12px; padding: 12px 14px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-    .btn-install { background: #6366f1; color: #fff; border: 0; padding: 6px 12px; border-radius: 6px; font-weight: 700; font-size: 10px; cursor: pointer; }
-
-    /* DIALOG MODALS */
-    dialog { border: 1px solid var(--card-border); background: var(--navy); color: var(--text-main); border-radius: 16px; padding: 0; width: min(380px, calc(100% - 24px)); box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
-    dialog::backdrop { background: rgba(0,0,0,0.7); backdrop-filter: blur(2px); }
-    dialog form { padding: 20px; }
-    .dialog-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
-    .dialog-top h2 { font: 800 18px 'Manrope', sans-serif; margin: 0; }
-    .close-btn { border: 0; background: rgba(255,255,255,0.05); border-radius: 6px; width: 28px; height: 28px; font-size: 16px; color: var(--text-muted); cursor: pointer; }
-    dialog label { display: block; font-size: 10px; font-weight: 700; color: var(--text-muted); margin: 12px 0 4px; }
-    dialog input, dialog select { width: 100%; border: 1px solid var(--card-border); border-radius: 8px; padding: 10px; font: 500 12px 'DM Sans', sans-serif; color: var(--text-main); outline: none; background: var(--card-bg); }
-    .amount-input { display: flex; align-items: center; border: 1px solid var(--card-border); border-radius: 8px; padding-left: 10px; background: var(--card-bg); color: var(--text-muted); font-size: 12px; }
-    .amount-input input { border: 0; background: transparent; }
-    .submit-btn { margin-top: 18px; width: 100%; border: 0; border-radius: 8px; background: var(--accent); color: #fff; padding: 12px; font: 700 11px 'DM Sans', sans-serif; cursor: pointer; }
-
-    .toast { position: fixed; bottom: 20px; left: 50%; transform: translate(-50%, 20px); opacity: 0; background: #1e293b; border: 1px solid var(--card-border); color: #fff; padding: 12px 20px; border-radius: 8px; font-size: 12px; transition: all 0.25s ease; pointer-events: none; z-index: 2000; box-shadow: 0 10px 25px rgba(0,0,0,0.4); }
-    .toast.show { opacity: 1; transform: translate(-50%, 0); }
-
-    @media(min-width: 768px) {
-      .summary-grid { grid-template-columns: 1.3fr 1fr 1fr; gap: 16px; }
-      .content-grid { grid-template-columns: 1.25fr 1fr; gap: 16px; }
-      .compare-cards { grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
-      .savings-grid { grid-template-columns: 1fr 1fr; gap: 16px; }
-      .history-tools { width: auto; }
-      .history-tools select { width: auto; }
-    }
-  </style>
-</head>
-<body>
-
-  <!-- TELA DE AUTENTICAÇÃO / CADASTRO -->
-  <div id="auth-screen">
-    <div class="auth-card">
-      <h2 id="auth-title">Entrar no Sistema</h2>
-      <p id="auth-subtitle">Informe seus dados para acessar o painel financeiro.</p>
-      <form id="auth-form">
-        <label>E-mail</label>
-        <input id="auth-email" type="email" placeholder="seu@email.com" required>
-        <label>Senha</label>
-        <input id="auth-pass" type="password" placeholder="••••••" required>
-        <button class="auth-btn" id="auth-submit-btn" type="submit">Entrar →</button>
-      </form>
-      <div class="auth-switch" id="auth-switch-mode">Não tem uma conta? Cadastre-se</div>
-    </div>
-  </div>
-
-  <div class="app-shell">
-    
-    <div id="sidebar-overlay"></div>
-
-    <!-- MENU GAVETA -->
-    <aside class="sidebar" id="sidebar">
-      <div class="brand">
-        <div class="brand-info">
-          <div class="brand-mark">R$</div>
-          <div><strong>Meu Controle</strong><small>FINANCEIRO</small></div>
-        </div>
-        <button class="close-drawer-btn" id="close-drawer-btn">×</button>
-      </div>
-
-      <div class="side-label">NAVEGAÇÃO PRINCIPAL</div>
-      <a class="nav-item active" data-tab="tab-overview"><span>▦</span> Visão geral</a>
-      <a class="nav-item" data-tab="tab-compare"><span>📊</span> Comparativo</a>
-      <a class="nav-item" data-tab="tab-savings"><span>🐷</span> Poupança</a>
-      <a class="nav-item" data-tab="tab-history"><span>↕</span> Lançamentos</a>
-      <a class="nav-item" data-tab="tab-admin" id="nav-admin-item" style="display: none; color: var(--accent);"><span>👑</span> Permissões Admin</a>
-
-      <div class="sidebar-bottom">
-        <span class="user-info" id="sidebar-user-email">Carregando...</span>
-        <span class="logout-link" id="logout-btn">Sair da Conta</span>
-      </div>
-    </aside>
-
-    <!-- CABEÇALHO MOBILE -->
-    <header class="mobile-header">
-      <button class="menu-hamburger-btn" id="open-drawer-btn" title="Abrir Menu">☰</button>
-      <div class="mobile-title"><span style="color:var(--green); font-weight:800;">R$</span> Meu Controle</div>
-      <div style="width: 38px;"></div>
-    </header>
-
-    <main class="main">
-      <!-- BANNER PWA -->
-      <div class="pwa-banner" id="pwa-banner" style="display: none;">
-        <div>
-          <b style="color:#fff; font-size:11px; display:block;">Instalar no celular?</b>
-          <small style="color:#c7d2fe; font-size:9px;">Acesse direto da tela inicial.</small>
-        </div>
-        <div>
-          <button class="btn-install" id="install-pwa-btn">Instalar</button>
-        </div>
-      </div>
-
-      <!-- ABA 1: VISÃO GERAL -->
-      <div class="tab-section active" id="tab-overview">
-        <header class="topbar">
-          <div>
-            <p class="eyebrow" id="today-label">RESUMO FINANCEIRO</p>
-            <h1>Visão geral</h1>
-            <p class="subheading">Acompanhe seu dinheiro com clareza.</p>
-          </div>
-          <div style="display: flex; gap: 6px; align-items: center;">
-            <button id="toggle-visibility-btn" type="button" style="border:1px solid var(--card-border); background:var(--card-bg); border-radius:8px; padding:8px 10px; color:var(--text-main); font-weight:600; font-size:10px; cursor:pointer;" title="Esconder/Mostrar Valores">👁️</button>
-            <button class="month-chip" id="month-filter" type="button" style="border:1px solid var(--card-border); background:var(--card-bg); border-radius:8px; padding:8px 12px; color:var(--text-main); font-weight:600; font-size:10px;">▣ <span id="month-name">Este mês</span></button>
-          </div>
-        </header>
-
-        <section class="summary-grid" id="summary-grid-cards">
-          <article class="summary-card balance-card">
-            <div class="card-top"><span>Saldo do Período</span><span class="icon-bubble">◈</span></div>
-            <strong class="big-value" id="balance">R$ 0,00</strong>
-            <small>Entradas - Saídas</small>
-          </article>
-          <article class="summary-card">
-            <div class="card-top"><span>Receitas</span><span class="icon-bubble green">↗</span></div>
-            <strong class="metric green-text" id="income-total">R$ 0,00</strong>
-            <small>Entradas do mês</small>
-          </article>
-          <article class="summary-card">
-            <div class="card-top"><span>Despesas</span><span class="icon-bubble red">↘</span></div>
-            <strong class="metric red-text" id="expense-total">R$ 0,00</strong>
-            <small>Saídas do mês</small>
-          </article>
-        </section>
-
-        <section class="entry-actions">
-          <button class="action-card income-action" id="open-income">
-            <span class="action-icon">＋</span>
-            <span><b>Adicionar receita</b><small id="income-perm-msg">Restrito Admin</small></span>
-          </button>
-          <button class="action-card expense-action" id="open-expense">
-            <span class="action-icon">－</span>
-            <span><b>Adicionar despesa</b><small id="expense-perm-msg">Restrito Admin</small></span>
-          </button>
-        </section>
-
-        <section class="content-grid">
-          <article class="panel chart-panel">
-            <div class="panel-heading">
-              <div><h2>Orçamento & Gastos</h2><p>Receita base e categorias.</p></div>
-              <span class="mini-tag">ROSCA</span>
-            </div>
-            <div class="chart-wrap">
-              <canvas id="expense-chart"></canvas>
-              <div class="chart-center"><strong id="chart-total">R$ 0</strong><small>RESTANTE</small></div>
-            </div>
-            <div class="legend" id="chart-legend"><div class="empty-legend">Adicione receitas e despesas.</div></div>
-          </article>
-
-          <article class="panel payment-panel">
-            <div class="panel-heading">
-              <div><h2>Extrato Rápido</h2><p>Últimos lançamentos do mês.</p></div>
-              <span class="mini-tag">EXTRATO</span>
-            </div>
-            <div class="mini-extrato" id="mini-extrato-list">
-              <div style="text-align:center; padding:15px; color:var(--text-muted); font-size:11px;">Nenhum lançamento recente.</div>
-            </div>
-          </article>
-        </section>
-      </div>
-
-      <!-- ABA 2: COMPARATIVO MENSAL -->
-      <div class="tab-section" id="tab-compare">
-        <header class="topbar">
-          <div>
-            <p class="eyebrow">ANÁLISE DE DESEMPENHO</p>
-            <h1>Comparativo de Meses</h1>
-            <p class="subheading">Comportamento dos seus gastos.</p>
-          </div>
-        </header>
-
-        <section class="compare-cards">
-          <div class="compare-card">
-            <small>Gasto Mês Atual</small>
-            <strong id="comp-current-expense">R$ 0,00</strong>
-            <span id="comp-diff-tag" class="green-text">0% vs Anterior</span>
-          </div>
-          <div class="compare-card">
-            <small>Gasto Mês Anterior</small>
-            <strong id="comp-prev-expense">R$ 0,00</strong>
-          </div>
-          <div class="compare-card">
-            <small>Maior Categoria de Gasto</small>
-            <strong id="comp-top-cat">-</strong>
-            <small id="comp-top-cat-val">R$ 0,00</small>
-          </div>
-        </section>
-
-        <article class="panel">
-          <div class="panel-heading">
-            <div><h2>Evolução Mensal (Entradas x Saídas)</h2><p>Gráfico de barras verticais.</p></div>
-            <span class="mini-tag">BARRAS</span>
-          </div>
-          <div style="height: 240px; margin-top: 12px;">
-            <canvas id="bar-chart-compare"></canvas>
-          </div>
-        </article>
-      </div>
-
-      <!-- ABA 3: POUPANÇA -->
-      <div class="tab-section" id="tab-savings">
-        <header class="topbar">
-          <div>
-            <p class="eyebrow">RESERVA & INVESTIMENTOS</p>
-            <h1>Sua Poupança</h1>
-            <p class="subheading">Acompanhe seus aportes e saques.</p>
-          </div>
-          <button class="submit-btn" id="open-savings-modal" style="margin:0; width:auto; padding:8px 12px; font-size:10px;">+ Operação</button>
-        </header>
-
-        <section class="savings-grid">
-          <div class="savings-card">
-            <small>SALDO TOTAL ACUMULADO</small>
-            <strong id="savings-total-balance">R$ 0,00</strong>
-            <small id="savings-growth-msg">Calculando...</small>
-          </div>
-          <div class="savings-card" style="background: linear-gradient(135deg, #064e3b, #0f172a); border-color:#047857;">
-            <small>APORTES NESTE MÊS</small>
-            <strong id="savings-month-deposits">R$ 0,00</strong>
-            <small id="savings-month-diff">0% vs anterior</small>
-          </div>
-        </section>
-
-        <article class="panel">
-          <div class="panel-heading">
-            <div><h2>Histórico da Poupança</h2></div>
-            <span class="mini-tag">REGISTROS</span>
-          </div>
-          <div class="table-wrap" style="margin-top: 10px;">
-            <table>
-              <thead>
-                <tr><th>TIPO</th><th>DATA</th><th>VALOR</th><th>REGISTRADO POR</th></tr>
-              </thead>
-              <tbody id="savings-list">
-                <tr><td colspan="4" style="text-align:center; padding:15px;">Nenhum registro.</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </article>
-      </div>
-
-      <!-- ABA 4: LANÇAMENTOS -->
-      <div class="tab-section" id="tab-history">
-        <header class="topbar">
-          <div>
-            <p class="eyebrow">HISTÓRICO COMPLETO</p>
-            <h1>Lançamentos</h1>
-            <p class="subheading">Visualize todas as despesas e receitas.</p>
-          </div>
-        </header>
-
-        <section class="panel history-panel" style="margin-top:0;">
-          <div class="panel-heading history-heading">
-            <div><h2>Transações Registradas</h2></div>
-            <div class="history-tools">
-              <select id="type-filter"><option value="all">Todos</option><option value="expense">Despesas</option><option value="income">Receitas</option></select>
-              <select id="category-filter"><option value="all">Categorias</option></select>
-            </div>
-          </div>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr><th>DESCRIÇÃO</th><th>CAT.</th><th>DATA</th><th>VALOR</th><th>SITUAÇÃO</th><th>AÇÕES</th></tr>
-              </thead>
-              <tbody id="transaction-list">
-                <tr><td colspan="6" class="empty-state" style="text-align:center; padding:20px;"><span>✦</span><b>Nenhum lançamento encontrado</b></td></tr>
-              </tbody>
-            </table>
-          </div>
-        </section>
-      </div>
-
-      <!-- ABA 5: ADMIN / APROVAÇÃO -->
-      <div class="tab-section" id="tab-admin">
-        <header class="topbar">
-          <div>
-            <p class="eyebrow">PAINEL DE CONTROLADORIA</p>
-            <h1>Aprovação & Permissões</h1>
-            <p class="subheading">Gerencie os acessos do aplicativo.</p>
-          </div>
-        </header>
-        <div class="panel admin-panel">
-          <div id="pending-users-list">
-            <small style="color: var(--text-muted);">Nenhum usuário cadastrado.</small>
-          </div>
-        </div>
-      </div>
-
-      <footer><div style="font-size:9px; color:var(--text-muted); text-align:center; margin-top:20px;">Meu Controle Financeiro • Firebase</div></footer>
-    </main>
-  </div>
-
-  <!-- CHAT WIDGET -->
-  <div id="chat-widget" style="display: none;">
-    <button id="chat-toggle-btn" title="Chat">💬<span class="chat-badge" id="chat-badge" style="display: none;">0</span></button>
-    <div id="chat-box">
-      <div class="chat-header">
-        <h4><span class="online-indicator" id="peer-status-dot"></span><span id="chat-title">Chat</span></h4>
-        <button class="close-btn" id="close-chat-btn" style="width:22px;height:22px;font-size:12px;">×</button>
-      </div>
-      <div class="chat-messages" id="chat-messages-container"></div>
-      <form class="chat-input-area" id="chat-form">
-        <input id="chat-input" type="text" placeholder="Escreva uma mensagem..." autocomplete="off" required>
-        <button class="chat-send-btn" type="submit">Enviar</button>
-      </form>
-    </div>
-  </div>
-
-  <!-- MODAL TRANSAÇÃO -->
-  <dialog id="entry-dialog">
-    <form id="entry-form" method="dialog">
-      <div class="dialog-top">
-        <div><span style="font-size:8px; letter-spacing:1px; font-weight:800; color:var(--accent);">NOVO LANÇAMENTO</span><h2 id="dialog-title">Adicionar</h2></div>
-        <button class="close-btn" type="button" id="close-dialog">×</button>
-      </div>
-      <input type="hidden" id="entry-type" value="expense">
-      <label>Nome do lançamento</label>
-      <input id="entry-name" type="text" placeholder="Ex.: Mercado" maxlength="60" required>
-      <label>Valor (R$)</label>
-      <div class="amount-input"><span>R$</span><input id="entry-amount" type="number" min="0.01" step="0.01" placeholder="0,00" required></div>
-      <div id="income-kind-wrap" hidden>
-        <label>Tipo de receita</label>
-        <select id="income-kind"><option value="income">Receita</option><option value="extra">Receita extra</option></select>
-      </div>
-      <div id="expense-category-wrap">
-        <label>Categoria</label>
-        <select id="entry-category">
-          <option>Alimentação</option><option>Combustível</option><option>Gastos pessoais</option>
-          <option>Moradia</option><option>Saúde</option><option>Transporte</option>
-          <option>Educação</option><option>Lazer</option><option>Contas</option><option>Outros</option>
-        </select>
-      </div>
-      <label>Data</label>
-      <input id="entry-date" type="date" required>
-      <button class="submit-btn" type="submit">Registrar →</button>
-    </form>
-  </dialog>
-
-  <!-- MODAL POUPANÇA -->
-  <dialog id="savings-dialog">
-    <form id="savings-form" method="dialog">
-      <div class="dialog-top">
-        <div><span style="font-size:8px; letter-spacing:1px; font-weight:800; color:var(--purple);">POUPANÇA</span><h2>Operação</h2></div>
-        <button class="close-btn" type="button" id="close-savings-dialog">×</button>
-      </div>
-      <label>Operação</label>
-      <select id="savings-type">
-        <option value="deposit">Depósito (+)</option>
-        <option value="withdraw">Retirada (-)</option>
-      </select>
-      <label>Valor (R$)</label>
-      <div class="amount-input"><span>R$</span><input id="savings-amount" type="number" min="0.01" step="0.01" placeholder="0,00" required></div>
-      <label>Data</label>
-      <input id="savings-date" type="date" required>
-      <button class="submit-btn" type="submit" style="background:var(--purple);">Confirmar →</button>
-    </form>
-  </dialog>
-
-  <div class="toast" id="toast"></div>
-
-  <script>
     const firebaseConfig = {
-      apiKey: "AIzaSyDRD6gZKumzdt5GK0ZOdzqWWIKVn6ufHVE",
-      authDomain: "controle-financeiro-cc95a.firebaseapp.com",
-      projectId: "controle-financeiro-cc95a",
-      storageBucket: "controle-financeiro-cc95a.firebasestorage.app",
-      messagingSenderId: "800648732950",
-      appId: "1:800648732950:web:bbcd127bed6006387a3037",
-      measurementId: "G-QCTKWS1STH"
+      apiKey: "AIzaSyCz3X_YrYt6o9UATBCiH2Gy_ojcf20Y2GU",
+      authDomain: "controle-finaceiro-7f6d0.firebaseapp.com",
+      projectId: "controle-finaceiro-7f6d0",
+      storageBucket: "controle-finaceiro-7f6d0.firebasestorage.app",
+      messagingSenderId: "171455283903",
+      appId: "1:171455283903:web:77c41302a5b6548dea3c0a"
     };
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
 
-    const COLORS = ["#818cf8","#f59e0b","#ef4444","#3b82f6","#a855f7","#14b8a6","#64748b","#f97316","#84cc16"];
-    const categories = ["Alimentação","Combustível","Gastos pessoais","Moradia","Saúde","Transporte","Educação","Lazer","Contas","Outros"];
-    if (window.ChartDataLabels) Chart.register(ChartDataLabels);
+    window.db = db;
+    window.auth = auth;
+    window.firebaseModules = { collection, addDoc, deleteDoc, onSnapshot, doc, setDoc, updateDoc, getDocs, query, where };
+    window.firebaseAuthModules = { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut };
+    window.dispatchEvent(new Event('firebase-ready'));
+  </script>
 
-    let currentUser = null;
-    let isAdmin = false;
-    let isRegisterMode = false;
-    let transactions = [];
-    let savingsRecords = [];
-    let chart = null;
-    let barChart = null;
-    let unreadCount = 0;
-    let chatOpen = false;
-    let deferredPrompt = null;
-    let messagesList = [];
-    let valuesHidden = false;
+  <style>
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; word-break: break-word; }
+    body { touch-action: pan-x pan-y; font-size: 15px; }
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: #f8fafc; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans antialiased min-h-screen flex flex-col pt-16 overflow-x-hidden">
 
-    const $ = id => document.getElementById(id);
-    const money = value => new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"}).format(value || 0);
-    const today = () => new Date().toISOString().slice(0,10);
-    const currentMonth = today().slice(0,7);
+  <!-- Modal Central Moderno para Alertas / Notificações -->
+  <div id="modal-aviso-central" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl text-center space-y-4">
+      <div id="modal-icone-aviso" class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto text-xl font-bold">ℹ️</div>
+      <h3 id="modal-titulo-aviso" class="font-bold text-lg text-slate-800">Aviso do Sistema</h3>
+      <p id="modal-texto-aviso" class="text-sm text-slate-600 leading-relaxed"></p>
+      <button onclick="fecharModalAviso()" class="w-full bg-blue-700 hover:bg-blue-800 text-white font-semibold py-3 rounded-2xl text-sm shadow">Entendido</button>
+    </div>
+  </div>
 
-    function showToast(msg) {
-      const el = $("toast"); 
-      if (!el) return;
-      el.textContent = msg; 
-      el.classList.add("show");
-      setTimeout(() => el.classList.remove("show"), 3500);
-    }
-
-    $("toggle-visibility-btn").addEventListener("click", () => {
-      valuesHidden = !valuesHidden;
-      $("summary-grid-cards").classList.toggle("hidden-values", valuesHidden);
-      $("toggle-visibility-btn").textContent = valuesHidden ? "🔒" : "👁️";
-      showToast(valuesHidden ? "Cards ocultados. O gráfico subiu." : "Cards visíveis.");
-    });
-
-    function openDrawer() {
-      $("sidebar").classList.add("open");
-      $("sidebar-overlay").classList.add("active");
-    }
-    function closeDrawer() {
-      $("sidebar").classList.remove("open");
-      $("sidebar-overlay").classList.remove("active");
-    }
-
-    $("open-drawer-btn").addEventListener("click", openDrawer);
-    $("close-drawer-btn").addEventListener("click", closeDrawer);
-    $("sidebar-overlay").addEventListener("click", closeDrawer);
-
-    document.querySelectorAll(".nav-item").forEach(item => {
-      item.addEventListener("click", () => {
-        document.querySelectorAll(".nav-item").forEach(i => i.classList.remove("active"));
-        document.querySelectorAll(".tab-section").forEach(s => s.classList.remove("active"));
-        item.classList.add("active");
+  <!-- Menu Lateral Deslizante (Gaveta) -->
+  <div id="drawer-overlay" class="fixed inset-0 bg-black/50 z-50 hidden transition-opacity" onclick="fecharMenuLateral()"></div>
+  <div id="drawer-menu" class="fixed top-0 left-0 bottom-0 w-4/5 max-w-xs bg-white z-50 shadow-2xl transform -translate-x-full transition-transform duration-300 flex flex-col">
+    <div class="bg-blue-800 text-white p-4 flex justify-between items-center shrink-0">
+      <div class="flex items-center space-x-2">
+        <img src="https://cdn-icons-png.flaticon.com/512/3135/3135706.png" class="w-7 h-7">
+        <h2 class="font-bold text-sm">Menu & Configurações</h2>
+      </div>
+      <button onclick="fecharMenuLateral()" class="text-white font-bold text-xl p-1">✕</button>
+    </div>
+    
+    <div class="p-4 overflow-y-auto flex-grow space-y-5 text-sm">
+      
+      <!-- Painel Exclusivo do Admin na Gaveta -->
+      <div id="drawer-admin-config" class="hidden bg-emerald-50 border border-emerald-200 p-3.5 rounded-2xl space-y-3">
+        <span class="font-bold text-emerald-900 text-xs uppercase tracking-wider block">Gerenciar Finanças</span>
         
-        const tabId = item.dataset.tab;
-        if ($(tabId)) $(tabId).classList.add("active");
-        
-        if (tabId === "tab-compare") renderComparison();
-        if (tabId === "tab-savings") renderSavings();
-        
-        closeDrawer();
-      });
-    });
+        <div class="space-y-1.5">
+          <label class="text-[11px] font-semibold text-emerald-800 block">Renda Principal:</label>
+          <div class="flex gap-1.5">
+            <input type="number" step="0.01" id="input-receita" placeholder="Valor (R$)" class="w-full p-2 border border-emerald-300 rounded-xl bg-white text-xs">
+            <button type="button" onclick="salvarReceita()" class="bg-emerald-600 text-white px-3 py-2 rounded-xl text-xs font-semibold shrink-0">Salvar</button>
+          </div>
+        </div>
 
-    window.addEventListener("beforeinstallprompt", (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-      if (!isStandalone) $("pwa-banner").style.display = "flex";
-    });
+        <div class="space-y-1.5 border-t border-emerald-200 pt-2">
+          <label class="text-[11px] font-semibold text-emerald-800 block">Adicionar Renda Extra:</label>
+          <input type="text" id="extra-nome" placeholder="Descrição (Ex: Corrida)" class="w-full p-2 border border-emerald-300 rounded-xl bg-white text-xs">
+          <div class="flex gap-1.5">
+            <input type="number" step="0.01" id="extra-valor" placeholder="Valor (R$)" class="w-full p-2 border border-emerald-300 rounded-xl bg-white text-xs">
+            <button type="button" onclick="adicionarRendaExtra()" class="bg-blue-700 text-white px-3 py-2 rounded-xl text-xs font-semibold shrink-0">Adicionar</button>
+          </div>
+        </div>
 
-    $("install-pwa-btn")?.addEventListener("click", async () => {
-      if (deferredPrompt) {
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        if (outcome === "accepted") {
-          showToast("Instalado com sucesso!");
-          $("pwa-banner").style.display = "none";
-        }
-        deferredPrompt = null;
+        <div class="border-t border-emerald-200 pt-2 space-y-1.5">
+          <label class="text-[11px] font-semibold text-emerald-800 block">Adicionar Despesa Fixa:</label>
+          <input type="text" id="fixa-nome" placeholder="Nome (Ex: Aluguel)" class="w-full p-2 border border-emerald-300 rounded-xl bg-white text-xs">
+          <div class="flex gap-1.5">
+            <input type="number" step="0.01" id="fixa-valor" placeholder="Valor (R$)" class="w-full p-2 border border-emerald-300 rounded-xl bg-white text-xs">
+            <button type="button" onclick="adicionarDespesaFixa()" class="bg-slate-700 text-white px-3 py-2 rounded-xl text-xs font-semibold shrink-0">Fixar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Receita Total Visível para Usuário no Menu -->
+      <div id="drawer-receita-card" class="bg-emerald-50 border border-emerald-200 p-3.5 rounded-2xl space-y-2">
+        <div>
+          <span class="font-bold text-emerald-800 text-xs uppercase tracking-wider block">Receita Total do Mês</span>
+          <div id="drawer-valor-receita" class="text-lg font-extrabold text-emerald-900 mt-0.5">R$ 0,00</div>
+        </div>
+        <div id="drawer-lista-extras-user" class="border-t border-emerald-200 pt-2 space-y-1"></div>
+      </div>
+
+      <div>
+        <span class="font-bold text-slate-400 uppercase tracking-wider block mb-1 text-xs">Mês Selecionado</span>
+        <div id="drawer-mes-atual" class="p-3 bg-blue-50 border border-blue-200 rounded-xl font-bold text-blue-900 text-xs"></div>
+      </div>
+
+      <div>
+        <span class="font-bold text-slate-400 uppercase tracking-wider block mb-1 text-xs">Histórico de Meses</span>
+        <div id="drawer-lista-meses" class="space-y-1.5"></div>
+      </div>
+
+      <!-- Gerenciamento de Usuários (Apenas Admin) -->
+      <div id="drawer-admin-usuarios" class="hidden border-t pt-4 space-y-2">
+        <span class="font-bold text-slate-400 uppercase tracking-wider block text-xs">Aprovar Usuários</span>
+        <div id="drawer-lista-usuarios" class="space-y-2 max-h-48 overflow-y-auto pr-1"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Botão Flutuante do Chat -->
+  <div id="container-btn-chat" class="hidden fixed bottom-5 right-5 z-40">
+    <button onclick="alternarJanelaChat()" class="bg-indigo-600 hover:bg-indigo-700 text-white p-4 rounded-full shadow-2xl flex items-center justify-center transition hover:scale-105">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+    </button>
+  </div>
+
+  <!-- Janela do Chat -->
+  <div id="janela-chat" class="hidden fixed bottom-20 right-3 left-3 sm:left-auto sm:right-5 sm:w-80 bg-white rounded-3xl shadow-2xl border border-slate-200 z-50 flex flex-col overflow-hidden max-w-sm mx-auto">
+    <div class="bg-indigo-600 text-white p-3.5 flex justify-between items-center text-sm shrink-0">
+      <span class="font-bold">Suporte e Mensagens</span>
+      <div class="flex items-center gap-2">
+        <div id="admin-status-indicator" class="flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-indigo-700 text-indigo-100">
+          <span class="w-2 h-2 rounded-full bg-slate-300" id="status-dot"></span>
+          <span id="status-text">Offline</span>
+        </div>
+        <button onclick="alternarJanelaChat()" class="text-white font-bold p-1">✕</button>
+      </div>
+    </div>
+    <div id="chat-messages" class="h-60 overflow-y-auto p-3 bg-slate-50 space-y-2 text-sm flex-grow"></div>
+    <form onsubmit="enviarMensagem(event)" class="p-3 bg-white border-t space-y-2 shrink-0">
+      <div class="flex gap-1 items-center text-xs">
+        <span class="font-semibold text-slate-600">Para:</span>
+        <select id="chat-destinatario" class="p-1.5 border rounded-lg bg-white flex-grow text-xs">
+          <option value="todos">Todos (Geral)</option>
+        </select>
+      </div>
+      <div class="flex gap-2">
+        <input type="text" id="chat-input" placeholder="Digite sua mensagem..." required class="flex-grow p-2.5 border rounded-2xl text-sm bg-slate-50">
+        <button type="submit" class="bg-indigo-600 text-white font-semibold px-4 py-2.5 rounded-2xl text-sm">Enviar</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Cabeçalho Fixo -->
+  <header class="fixed top-0 left-0 right-0 z-40 bg-blue-800 text-white shadow-md">
+    <div class="max-w-4xl mx-auto p-3.5 px-4 flex justify-between items-center">
+      <div class="flex items-center space-x-3 truncate">
+        <button id="btn-menu-lateral" onclick="abrirMenuLateral()" class="hidden text-white focus:outline-none p-1 shrink-0">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+        </button>
+        <div class="flex items-center space-x-2 truncate">
+          <img src="https://cdn-icons-png.flaticon.com/512/3135/3135706.png" class="w-6 h-6 object-contain shrink-0">
+          <div class="truncate">
+            <h1 class="text-sm font-bold tracking-tight truncate">Finanças Pro</h1>
+            <p id="user-role-badge" class="text-xs text-blue-200 truncate">Não conectado</p>
+          </div>
+        </div>
+      </div>
+      <button id="btn-logout" onclick="logout()" class="hidden bg-blue-900 hover:bg-blue-950 text-xs px-3 py-2 rounded-xl transition shrink-0 font-semibold">Sair</button>
+    </div>
+  </header>
+
+  <!-- Container Principal -->
+  <main class="max-w-4xl mx-auto w-full p-4 flex-grow space-y-5">
+
+    <!-- Tela de Login / Cadastro -->
+    <section id="sec-login" class="bg-white p-6 rounded-3xl shadow-xl border max-w-sm mx-auto my-6">
+      
+      <!-- Formulário de Login -->
+      <div id="form-login-container">
+        <div class="text-center mb-5">
+          <img src="https://cdn-icons-png.flaticon.com/512/3135/3135706.png" class="w-14 h-14 mx-auto mb-2">
+          <h2 class="text-xl font-bold text-slate-800">Acesse o Sistema</h2>
+        </div>
+        <form onsubmit="handleLogin(event)" class="space-y-3.5 text-sm">
+          <div>
+            <label class="block font-semibold text-slate-600 mb-1">E-mail</label>
+            <input type="email" id="login-email" required placeholder="seu@email.com" class="w-full p-3 border rounded-2xl bg-slate-50">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-600 mb-1">Senha</label>
+            <input type="password" id="login-senha" required placeholder="Senha" class="w-full p-3 border rounded-2xl bg-slate-50">
+          </div>
+          <button type="submit" class="w-full bg-blue-700 text-white font-semibold py-3 rounded-2xl shadow">Entrar</button>
+        </form>
+        <div class="mt-5 text-center">
+          <button onclick="alternarTelaCadastro(true)" class="text-xs text-blue-700 font-bold">Criar nova conta</button>
+        </div>
+      </div>
+
+      <!-- Formulário de Cadastro -->
+      <div id="form-cadastro-container" class="hidden">
+        <div class="text-center mb-5">
+          <h2 class="text-xl font-bold text-slate-800">Criar Nova Conta</h2>
+        </div>
+        <form onsubmit="handleCadastro(event)" class="space-y-3.5 text-sm">
+          <div>
+            <label class="block font-semibold text-slate-600 mb-1">Nome</label>
+            <input type="text" id="cad-nome" required placeholder="Seu nome" class="w-full p-3 border rounded-2xl bg-slate-50">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-600 mb-1">E-mail</label>
+            <input type="email" id="cad-email" required placeholder="seu@email.com" class="w-full p-3 border rounded-2xl bg-slate-50">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-600 mb-1">Senha</label>
+            <input type="password" id="cad-senha" required placeholder="Senha" class="w-full p-3 border rounded-2xl bg-slate-50">
+          </div>
+          <button type="submit" class="w-full bg-emerald-600 text-white font-semibold py-3 rounded-2xl shadow">Solicitar Cadastro</button>
+        </form>
+        <div class="mt-5 text-center">
+          <button onclick="alternarTelaCadastro(false)" class="text-xs text-slate-600 font-medium">Voltar ao login</button>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Pendente -->
+    <section id="sec-pendente" class="hidden bg-amber-50 border p-6 rounded-3xl shadow-md max-w-sm mx-auto my-12 text-center space-y-4 text-sm">
+      <h2 class="font-bold text-amber-800 text-base">Aguardando Liberação</h2>
+      <p class="text-amber-700">O Administrador precisa aprovar seu acesso.</p>
+      <button onclick="logout()" class="bg-amber-600 text-white px-5 py-2.5 rounded-2xl font-semibold">Sair</button>
+    </section>
+
+    <!-- Dashboard Principal -->
+    <div id="sec-dashboard" class="hidden space-y-5">
+
+      <!-- Cards de Resumo Lado a Lado (Admin vê 2, Usuário comum vê apenas o saldo/disponível) -->
+      <div id="cards-resumo-container" class="grid grid-cols-2 gap-3">
+        <div id="card-despesas-box" class="bg-white p-4 rounded-3xl shadow-sm border border-slate-200 border-l-4 border-l-rose-500">
+          <span class="text-xs text-slate-500 font-medium block truncate">Despesas do Mês</span>
+          <div class="text-lg sm:text-2xl font-extrabold text-slate-800 mt-1 truncate" id="val-despesas">R$ 0,00</div>
+        </div>
+        <div class="bg-white p-4 rounded-3xl shadow-sm border border-slate-200 border-l-4 border-l-blue-600">
+          <span class="text-xs text-slate-500 font-medium block truncate">Saldo Restante</span>
+          <div class="text-lg sm:text-2xl font-extrabold text-slate-800 mt-1 truncate" id="val-saldo">R$ 0,00</div>
+        </div>
+      </div>
+
+      <!-- Formulário de Lançamento de Gasto Diário (Disponível para todos) -->
+      <section class="bg-white p-5 rounded-3xl shadow-sm border border-slate-200 text-sm">
+        <h3 class="font-bold text-slate-800 mb-3 text-base">Lançar Novo Gasto / Despesa Diária</h3>
+        <form onsubmit="adicionarGasto(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <input type="text" id="gasto-nome" placeholder="Descrição (Ex: Mercado)" required class="p-3 border rounded-2xl bg-slate-50">
+          <input type="number" step="0.01" id="gasto-valor" placeholder="Valor (R$)" required class="p-3 border rounded-2xl bg-slate-50">
+          <button type="submit" class="bg-blue-700 text-white font-semibold py-3 px-4 rounded-2xl shadow">
+            Registrar Gasto
+          </button>
+        </form>
+      </section>
+
+      <!-- Gráfico e Histórico -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-200 flex flex-col justify-between">
+          <h3 class="text-sm font-bold text-slate-800 mb-2">Distribuição de Despesas & Orçamento</h3>
+          <div class="relative w-full h-56 flex justify-center items-center">
+            <canvas id="chartDespesas"></canvas>
+          </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-200 flex flex-col">
+          <h3 class="text-sm font-bold text-slate-800 mb-3">Histórico de Gastos do Mês</h3>
+          <div class="overflow-y-auto max-h-56 flex-grow pr-1">
+            <ul id="lista-gastos" class="divide-y divide-slate-100 text-sm"></ul>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    const ADMIN_EMAIL = "giliard@admin.com";
+    let currentUser = JSON.parse(localStorage.getItem('pwa_user')) || null;
+    let chartInstance = null;
+    let appData = { receitas: {}, rendasExtras: {}, gastos: [], mensagens: [], usuarios: [], despesasFixas: {} };
+    
+    const dataAtualObj = new Date();
+    let mesSelecionado = `${dataAtualObj.getFullYear()}-${String(dataAtualObj.getMonth() + 1).padStart(2, '0')}`;
+
+    window.addEventListener('firebase-ready', () => {
+      if (currentUser) {
+        atualizarPresencaOnline(true);
+        verificarSessaoAtiva();
+      } else {
+        document.getElementById('sec-login').classList.remove('hidden');
       }
     });
 
-    $("auth-switch-mode").addEventListener("click", () => {
-      isRegisterMode = !isRegisterMode;
-      $("auth-title").textContent = isRegisterMode ? "Criar Nova Conta" : "Entrar no Sistema";
-      $("auth-subtitle").textContent = isRegisterMode ? "O primeiro e-mail cadastrado será Administrador automático." : "Informe seus dados.";
-      $("auth-submit-btn").textContent = isRegisterMode ? "Cadastrar →" : "Entrar →";
-      $("auth-switch-mode").textContent = isRegisterMode ? "Já tem conta? Entrar" : "Não tem conta? Cadastre-se";
+    window.addEventListener('load', () => {
+      initManifest();
+      initServiceWorker();
+      checkConnection();
+      window.addEventListener('beforeunload', () => { if (currentUser) atualizarPresencaOnline(false); });
     });
 
-    $("auth-form").addEventListener("submit", async e => {
-      e.preventDefault();
-      const email = $("auth-email").value.trim().toLowerCase();
-      const pass = $("auth-pass").value.trim();
-      const submitBtn = $("auth-submit-btn");
+    function abrirMenuLateral() {
+      document.getElementById('drawer-menu').classList.remove('-translate-x-full');
+      document.getElementById('drawer-overlay').classList.remove('hidden');
+    }
+    function fecharMenuLateral() {
+      document.getElementById('drawer-menu').classList.add('-translate-x-full');
+      document.getElementById('drawer-overlay').classList.add('hidden');
+    }
 
-      if (!email || !pass) {
-        showToast("Preencha o e-mail e a senha.");
-        return;
+    function alternarJanelaChat() {
+      document.getElementById('janela-chat').classList.toggle('hidden');
+    }
+
+    function mostrarNotificacao(texto, titulo = "Aviso do Sistema") {
+      document.getElementById('modal-titulo-aviso').innerText = titulo;
+      document.getElementById('modal-texto-aviso').innerText = texto;
+      document.getElementById('modal-aviso-central').classList.remove('hidden');
+    }
+
+    function fecharModalAviso() {
+      document.getElementById('modal-aviso-central').classList.add('hidden');
+    }
+
+    function alternarTelaCadastro(mostrar) {
+      if (mostrar) {
+        document.getElementById('form-login-container').classList.add('hidden');
+        document.getElementById('form-cadastro-container').classList.remove('hidden');
+      } else {
+        document.getElementById('form-cadastro-container').classList.add('hidden');
+        document.getElementById('form-login-container').classList.remove('hidden');
       }
+    }
 
-      submitBtn.textContent = "Processando...";
-      submitBtn.style.background = "#10b981";
+    async function handleCadastro(e) {
+      e.preventDefault();
+      const nome = document.getElementById('cad-nome').value.trim();
+      const email = document.getElementById('cad-email').value.trim().toLowerCase();
+      const senha = document.getElementById('cad-senha').value.trim();
+
+      const { collection, addDoc, getDocs, query, where } = window.firebaseModules;
+      const { createUserWithEmailAndPassword } = window.firebaseAuthModules;
+
+      const q = query(collection(window.db, "usuarios"), where("email", "==", email));
+      const querySnapshot = await getDocs(q);
+      if (!querySnapshot.empty) { mostrarNotificacao("Este e-mail já está cadastrado no sistema."); return; }
 
       try {
-        const usersSnapshot = await db.collection("users_status").get();
-        const isFirstUser = usersSnapshot.empty;
-
-        const docId = email.replace(/[.#$[\]]/g, "_");
-        const userRef = db.collection("users_status").doc(docId);
-        const docSnap = await userRef.get();
-
-        if (isRegisterMode) {
-          if (docSnap.exists) { 
-            showToast("Este e-mail já foi cadastrado no sistema!"); 
-            resetBtn(submitBtn);
-            return; 
-          }
-          
-          await userRef.set({
-            email, 
-            pass,
-            approved: isFirstUser ? true : false, 
-            isAdmin: isFirstUser ? true : false,
-            lastSeen: Date.now()
-          });
-          
-          if (isFirstUser) {
-            showToast("Primeiro acesso! Conta Admin criada.");
-            currentUser = email;
-            isAdmin = true;
-            finishLogin();
-          } else {
-            showToast("Cadastro realizado! Aguarde liberação do Administrador.");
-            isRegisterMode = false;
-            $("auth-switch-mode").click();
-            resetBtn(submitBtn);
-          }
-          return;
-        }
-
-        if (!docSnap.exists) { 
-          showToast("E-mail não cadastrado. Faça o cadastro primeiro!"); 
-          resetBtn(submitBtn);
-          return; 
-        }
-
-        const data = docSnap.data();
-        if (data.pass !== pass) { 
-          showToast("Senha incorreta. Verifique os dados."); 
-          resetBtn(submitBtn);
-          return; 
-        }
-        if (!data.approved) { 
-          showToast("Sua conta aguarda aprovação do Administrador."); 
-          resetBtn(submitBtn);
-          return; 
-        }
-
-        currentUser = email;
-        isAdmin = data.isAdmin || false;
-        showToast("Login efetuado!");
-        finishLogin();
-
+        await createUserWithEmailAndPassword(window.auth, email, senha);
+        const eAdmin = (email === ADMIN_EMAIL);
+        await addDoc(collection(window.db, "usuarios"), { nome, email, senha, aprovado: eAdmin, isAdmin: eAdmin, online: false, criadoEm: Date.now() });
+        
+        mostrarNotificacao(eAdmin ? "Cadastro de Administrador realizado com sucesso!" : "Solicitação enviada! Seus dados de acesso foram salvos e o Administrador precisa aprovar seu acesso.");
+        alternarTelaCadastro(false);
       } catch (err) {
-        console.error(err);
-        showToast("Erro de conexão. Verifique sua internet.");
-        resetBtn(submitBtn);
+        mostrarNotificacao("Erro ao cadastrar: " + err.message);
       }
-    });
-
-    function resetBtn(btn) {
-      btn.textContent = isRegisterMode ? "Cadastrar →" : "Entrar →";
-      btn.style.background = "var(--accent)";
     }
 
-    function finishLogin() {
-      $("auth-screen").style.display = "none";
-      $("chat-widget").style.display = "block";
-      $("sidebar-user-email").textContent = currentUser;
-      
-      if (isAdmin) {
-        $("nav-admin-item").style.display = "flex";
-      }
-
-      initAppListeners();
-    }
-
-    $("logout-btn").addEventListener("click", () => location.reload());
-
-    function initAppListeners() {
-      setInterval(() => {
-        if (!currentUser) return;
-        db.collection("users_status").doc(currentUser.replace(/[.#$[\]]/g, "_")).get().then(doc => {
-          if (doc.exists) {
-            isAdmin = doc.data().isAdmin || false;
-            if (isAdmin) $("nav-admin-item").style.display = "flex";
-            checkPermissions();
-          }
-        }).catch(()=>{});
-
-        db.collection("users_status").doc(currentUser.replace(/[.#$[\]]/g, "_")).update({ lastSeen: Date.now() }).catch(()=>{});
-      }, 8000);
-
-      db.collection("transactions").orderBy("createdAt", "desc").onSnapshot(snapshot => {
-        transactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        render();
-        renderComparison();
-      });
-
-      db.collection("savings").orderBy("createdAt", "desc").onSnapshot(snapshot => {
-        savingsRecords = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        renderSavings();
-      });
-
-      db.collection("users_status").onSnapshot(snapshot => {
-        renderPendingUsers(snapshot.docs);
-      });
-
-      db.collection("messages").orderBy("createdAt", "asc").onSnapshot(snapshot => {
-        const oldLen = messagesList.length;
-        messagesList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        renderMessages(messagesList);
-
-        if (!chatOpen && messagesList.length > oldLen) {
-          const newMsgs = messagesList.filter(m => m.sender !== currentUser);
-          if (newMsgs.length) {
-            unreadCount = newMsgs.length;
-            $("chat-badge").textContent = unreadCount;
-            $("chat-badge").style.display = "grid";
-          }
-        }
-      });
-
-      db.collection("users_status").onSnapshot(snapshot => {
-        let peerOnline = false;
-        let onlineName = "";
-        const now = Date.now();
-        snapshot.docs.forEach(doc => {
-          const d = doc.data();
-          if (d.email !== currentUser && (now - (d.lastSeen || 0)) < 25000) {
-            peerOnline = true;
-            onlineName = d.email.split("@")[0];
-          }
-        });
-        const dot = $("peer-status-dot");
-        if (!dot) return;
-        if (peerOnline) { 
-          dot.classList.add("online"); 
-          $("chat-title").textContent = `Chat (${onlineName} online)`; 
-        } else { 
-          dot.classList.remove("online"); 
-          $("chat-title").textContent = "Chat Interno"; 
-        }
-      });
-    }
-
-    function renderPendingUsers(docs) {
-      const container = $("pending-users-list");
-      if (!container) return;
-      const users = docs.map(d => ({ id: d.id, ...d.data() }));
-      if (!users.length) { container.innerHTML = '<small style="color: var(--text-muted);">Nenhum usuário.</small>'; return; }
-
-      container.innerHTML = users.map(u => `
-        <div class="user-row">
-          <span><b>${u.email}</b> ${u.isAdmin ? '<span class="mini-tag">ADMIN</span>' : ''}</span>
-          <div class="user-controls">
-            <label><input type="checkbox" class="checkbox-liberar" data-id="${u.id}" ${u.approved ? 'checked' : ''}> Liberar</label>
-            <label><input type="checkbox" class="checkbox-admin" data-id="${u.id}" ${u.isAdmin ? 'checked' : ''}> Admin</label>
-          </div>
-        </div>
-      `).join("");
-
-      container.querySelectorAll(".checkbox-liberar").forEach(chk => {
-        chk.addEventListener("change", async e => {
-          await db.collection("users_status").doc(e.target.dataset.id).update({ approved: e.target.checked });
-          showToast(e.target.checked ? "Acesso liberado!" : "Acesso bloqueado.");
-        });
-      });
-
-      container.querySelectorAll(".checkbox-admin").forEach(chk => {
-        chk.addEventListener("change", async e => {
-          await db.collection("users_status").doc(e.target.dataset.id).update({ isAdmin: e.target.checked });
-          showToast("Permissão alterada!");
-        });
-      });
-    }
-
-    $("chat-toggle-btn").addEventListener("click", () => {
-      chatOpen = !chatOpen;
-      $("chat-box").style.display = chatOpen ? "flex" : "none";
-      if (chatOpen) { 
-        unreadCount = 0; 
-        $("chat-badge").style.display = "none";
-        const c = $("chat-messages-container");
-        c.scrollTop = c.scrollHeight;
-      }
-    });
-    $("close-chat-btn").addEventListener("click", () => { chatOpen = false; $("chat-box").style.display = "none"; });
-
-    $("chat-form").addEventListener("submit", async e => {
+    async function handleLogin(e) {
       e.preventDefault();
-      const text = $("chat-input").value.trim();
-      if (!text) return;
-      $("chat-input").value = "";
-      await db.collection("messages").add({ sender: currentUser, text, createdAt: Date.now() });
-    });
+      const email = document.getElementById('login-email').value.trim().toLowerCase();
+      const senha = document.getElementById('login-senha').value.trim();
 
-    function renderMessages(msgs) {
-      const c = $("chat-messages-container");
-      if (!c) return;
-      
-      c.innerHTML = msgs.map(m => {
-        const isMe = m.sender === currentUser;
-        const senderLabel = isMe ? "" : `<div class="chat-msg-sender">${m.sender.split("@")[0]}</div>`;
-        return `
-          <div class="chat-msg-row ${isMe ? 'sent' : 'received'}">
-            <div class="chat-msg">
-              ${senderLabel}
-              ${escapeHtml(m.text)}
-            </div>
-            <button class="msg-del-btn" data-msg-id="${m.id}" title="Apagar mensagem">×</button>
-          </div>
-        `;
-      }).join("");
+      const { collection, getDocs, query, where } = window.firebaseModules;
+      const { signInWithEmailAndPassword } = window.firebaseAuthModules;
 
-      c.scrollTop = c.scrollHeight;
-
-      c.querySelectorAll("[data-msg-id]").forEach(btn => {
-        btn.addEventListener("click", async () => {
-          await db.collection("messages").doc(btn.dataset.msgId).delete();
-        });
-      });
-    }
-
-    function checkPermissions() {
-      const openIncomeBtn = $("open-income");
-      const openExpenseBtn = $("open-expense");
-      if (!isAdmin) {
-        openIncomeBtn.classList.add("disabled");
-        openExpenseBtn.classList.add("disabled");
-        $("income-perm-msg").textContent = "Restrito Admin";
-        $("expense-perm-msg").textContent = "Restrito Admin";
-      } else {
-        openIncomeBtn.classList.remove("disabled");
-        openExpenseBtn.classList.remove("disabled");
-        $("income-perm-msg").textContent = "Receita ou extra";
-        $("expense-perm-msg").textContent = "Novo gasto";
-      }
-    }
-
-    function openDialog(type) {
-      if (!isAdmin) { showToast("Apenas o Administrador pode lançar valores."); return; }
-      $("entry-type").value = type;
-      $("entry-form").reset();
-      $("entry-date").value = today();
-      $("dialog-title").textContent = type === "income" ? "Adicionar receita" : "Adicionar despesa";
-      $("income-kind-wrap").hidden = type !== "income";
-      $("expense-category-wrap").hidden = type !== "expense";
-      $("entry-dialog").showModal();
-    }
-
-    $("open-income").addEventListener("click", () => openDialog("income"));
-    $("open-expense").addEventListener("click", () => openDialog("expense"));
-    $("close-dialog").addEventListener("click", () => $("entry-dialog").close());
-
-    $("entry-form").addEventListener("submit", async event => {
-      event.preventDefault();
-      if (!isAdmin) return;
-      const type = $("entry-type").value;
-      const name = $("entry-name").value.trim();
-      const amount = Number($("entry-amount").value);
-      const date = $("entry-date").value;
-      if (!name || !Number.isFinite(amount) || amount <= 0 || !date) return;
-
-      const incomeKind = $("income-kind").value;
-      await db.collection("transactions").add({
-        type, name, amount, date,
-        category: type === "income" ? (incomeKind === "extra" ? "Receita extra" : "Receita") : $("entry-category").value,
-        paid: false, createdBy: currentUser, createdAt: Date.now()
-      });
-      $("entry-dialog").close();
-      showToast("Salvo com sucesso!");
-    });
-
-    $("open-savings-modal").addEventListener("click", () => {
-      if (!isAdmin) { showToast("Apenas o Administrador."); return; }
-      $("savings-form").reset();
-      $("savings-date").value = today();
-      $("savings-dialog").showModal();
-    });
-    $("close-savings-dialog").addEventListener("click", () => $("savings-dialog").close());
-
-    $("savings-form").addEventListener("submit", async e => {
-      e.preventDefault();
-      if (!isAdmin) return;
-      const type = $("savings-type").value;
-      const amount = Number($("savings-amount").value);
-      const date = $("savings-date").value;
-      if (!Number.isFinite(amount) || amount <= 0 || !date) return;
-
-      await db.collection("savings").add({ type, amount, date, createdBy: currentUser, createdAt: Date.now() });
-      $("savings-dialog").close();
-      showToast("Poupança atualizada!");
-    });
-
-    function renderSavings() {
-      const totalBalance = savingsRecords.reduce((acc, r) => acc + (r.type === "deposit" ? r.amount : -r.amount), 0);
-      const thisMonthDeposits = savingsRecords.filter(r => r.date.slice(0,7) === currentMonth && r.type === "deposit").reduce((s, r) => s + r.amount, 0);
-
-      $("savings-total-balance").textContent = money(totalBalance);
-      $("savings-month-deposits").textContent = money(thisMonthDeposits);
-      $("savings-list").innerHTML = savingsRecords.length ? savingsRecords.map(r => `
-        <tr>
-          <td><b style="color:${r.type === 'deposit' ? 'var(--green)' : 'var(--red)'}">${r.type === 'deposit' ? 'Depósito' : 'Retirada'}</b></td>
-          <td>${new Date(r.date+"T12:00:00").toLocaleDateString("pt-BR")}</td>
-          <td><b>${money(r.amount)}</b></td>
-          <td>${(r.createdBy || 'Admin').split('@')[0]}</td>
-        </tr>
-      `).join("") : '<tr><td colspan="4" style="text-align:center; padding:15px;">Nenhum registro.</td></tr>';
-    }
-
-    function renderComparison() {
-      const monthExpenses = transactions.filter(t => t.date.slice(0,7) === currentMonth && t.type === "expense").reduce((s,t) => s + t.amount, 0);
-      const lastMonthObj = new Date(); lastMonthObj.setMonth(lastMonthObj.getMonth() - 1);
-      const lastMonthStr = lastMonthObj.toISOString().slice(0,7);
-      const prevMonthExpenses = transactions.filter(t => t.date.slice(0,7) === lastMonthStr && t.type === "expense").reduce((s,t) => s + t.amount, 0);
-
-      $("comp-current-expense").textContent = money(monthExpenses);
-      $("comp-prev-expense").textContent = money(prevMonthExpenses);
-
-      if (prevMonthExpenses > 0) {
-        const diff = Math.round(((monthExpenses - prevMonthExpenses) / prevMonthExpenses) * 100);
-        $("comp-diff-tag").textContent = `${diff > 0 ? '+' : ''}${diff}% vs Anterior`;
-        $("comp-diff-tag").className = diff <= 0 ? "green-text" : "red-text";
-      } else {
-        $("comp-diff-tag").textContent = "Sem base anterior";
-      }
-
-      const catTotals = {};
-      transactions.filter(t => t.date.slice(0,7) === currentMonth && t.type === "expense").forEach(t => {
-        catTotals[t.category] = (catTotals[t.category] || 0) + t.amount;
-      });
-      const topCat = Object.keys(catTotals).reduce((a, b) => catTotals[a] > catTotals[b] ? a : b, "-");
-      $("comp-top-cat").textContent = topCat;
-      $("comp-top-cat-val").textContent = topCat !== "-" ? money(catTotals[topCat]) : "R$ 0,00";
-
-      const months = [];
-      for (let i = 5; i >= 0; i--) {
-        const d = new Date(); d.setMonth(d.getMonth() - i);
-        months.push(d.toISOString().slice(0,7));
-      }
-
-      const incData = months.map(m => transactions.filter(t => t.date.slice(0,7) === m && t.type === "income").reduce((s,t) => s + t.amount, 0));
-      const expData = months.map(m => transactions.filter(t => t.date.slice(0,7) === m && t.type === "expense").reduce((s,t) => s + t.amount, 0));
-      const monthLabels = months.map(m => {
-        const [y, mm] = m.split("-");
-        return new Date(y, mm - 1).toLocaleDateString("pt-BR", { month: "short" }).toUpperCase();
-      });
-
-      if (barChart) barChart.destroy();
-      barChart = new Chart($("bar-chart-compare"), {
-        type: "bar",
-        data: {
-          labels: monthLabels,
-          datasets: [
-            { label: "Receitas", data: incData, backgroundColor: "#10b981", borderRadius: 4 },
-            { label: "Despesas", data: expData, backgroundColor: "#ef4444", borderRadius: 4 }
-          ]
-        },
-        options: {
-          responsive: true, maintainAspectRatio: false,
-          plugins: { legend: { labels: { color: "#9ca3af", font: { size: 10 } } }, datalabels: { display: false } },
-          scales: {
-            x: { ticks: { color: "#9ca3af", font: { size: 9 } }, grid: { display: false } },
-            y: { ticks: { color: "#9ca3af", font: { size: 9 } }, grid: { color: "rgba(255,255,255,0.05)" } }
-          }
+      try {
+        await signInWithEmailAndPassword(window.auth, email, senha);
+        const q = query(collection(window.db, "usuarios"), where("email", "==", email));
+        const querySnapshot = await getDocs(q);
+        
+        if (querySnapshot.empty) { 
+          const eAdmin = (email === ADMIN_EMAIL);
+          currentUser = { email, aprovado: eAdmin, isAdmin: eAdmin };
+        } else {
+          querySnapshot.forEach(docSnap => { currentUser = { id: docSnap.id, ...docSnap.data() }; });
         }
-      });
+
+        localStorage.setItem('pwa_user', JSON.stringify(currentUser));
+        atualizarPresencaOnline(true);
+        verificarSessaoAtiva();
+      } catch (err) {
+        mostrarNotificacao("E-mail ou senha incorretos.");
+      }
     }
 
-    function render() {
-      checkPermissions();
-      const monthTransactions = transactions.filter(t => t.date.slice(0,7) === currentMonth);
-      const income = monthTransactions.filter(t => t.type === "income").reduce((s,t) => s + t.amount, 0);
-      const expenses = monthTransactions.filter(t => t.type === "expense").reduce((s,t) => s + t.amount, 0);
-      const paid = monthTransactions.filter(t => t.type === "expense" && t.paid).reduce((s,t) => s + t.amount, 0);
-      const pending = expenses - paid;
-
-      $("balance").textContent = money(income - expenses);
-      $("income-total").textContent = money(income);
-      $("expense-total").textContent = money(expenses);
-      $("paid-total").textContent = money(paid);
-      $("pending-total").textContent = money(pending);
-
-      const restante = income - expenses;
-      $("chart-total").textContent = money(restante).replace(",00","");
-
-      renderBudgetChart(income, monthTransactions.filter(t => t.type === "expense"));
-      renderMiniExtrato(monthTransactions);
-      renderCategoryOptions();
-      renderHistory();
+    async function atualizarPresencaOnline(status) {
+      if (!currentUser || !currentUser.id || !window.db) return;
+      try {
+        const { doc, updateDoc } = window.firebaseModules;
+        await updateDoc(doc(window.db, "usuarios", currentUser.id), { online: status });
+      } catch (err) {}
     }
 
-    // GRÁFICO DE ROSCA COM BASE NA RECEITA (VERDE + CATEGORIAS)
-    function renderBudgetChart(totalIncome, expenses) {
-      const catTotals = {};
-      let totalExpense = 0;
-      expenses.forEach(t => { 
-        catTotals[t.category] = (catTotals[t.category] || 0) + t.amount; 
-        totalExpense += t.amount;
-      });
-
-      const restante = Math.max(0, totalIncome - totalExpense);
-      const labels = ["Disponível / Receita", ...Object.keys(catTotals)];
-      const values = [restante, ...Object.values(catTotals)];
-      const bgColors = ["#10b981", ...Object.keys(catTotals).map((cat, i) => COLORS[categories.indexOf(cat) % COLORS.length] || COLORS[i % COLORS.length])];
-
-      if (chart) chart.destroy();
-
-      chart = new Chart($("expense-chart"), {
-        type: "doughnut",
-        data: {
-          labels,
-          datasets: [{
-            data: values,
-            backgroundColor: bgColors,
-            borderWidth: 2, borderColor: "#111827"
-          }]
-        },
-        options: {
-          responsive: true, maintainAspectRatio: false, cutout: "65%",
-          plugins: {
-            legend: { display: false },
-            datalabels: {
-              color: "#fff", font: { weight: "bold", size: 9 },
-              formatter: (val, ctx) => {
-                if (totalIncome <= 0) return "";
-                const pct = Math.round((val / totalIncome) * 100);
-                return pct < 4 ? "" : `${pct}%`;
-              }
-            }
-          }
-        }
-      });
-
-      let legendHTML = `<div class="legend-item"><span class="legend-dot" style="background:#10b981"></span><span>Disponível</span><b>${money(restante)}</b></div>`;
-      Object.keys(catTotals).forEach((cat, i) => {
-        legendHTML += `<div class="legend-item"><span class="legend-dot" style="background:${bgColors[i+1]}"></span><span>${escapeHtml(cat)}</span><b>${money(catTotals[cat])}</b></div>`;
-      });
-      $("chart-legend").innerHTML = legendHTML;
-    }
-
-    // EXTRATO RÁPIDO NA VISÃO GERAL
-    function renderMiniExtrato(monthTransactions) {
-      const container = $("mini-extrato-list");
-      const recent = monthTransactions.slice(0, 5); // Mostra os 5 mais recentes
-
-      if (!recent.length) {
-        container.innerHTML = '<div style="text-align:center; padding:15px; color:var(--text-muted); font-size:11px;">Nenhum lançamento recente.</div>';
+    function verificarSessaoAtiva() {
+      document.getElementById('sec-login').classList.add('hidden');
+      document.getElementById('sec-pendente').classList.add('hidden');
+      const isAdmin = (currentUser.email === ADMIN_EMAIL || currentUser.isAdmin);
+      if (!isAdmin && !currentUser.aprovado) {
+        document.getElementById('sec-pendente').classList.remove('hidden');
+        document.getElementById('btn-logout').classList.remove('hidden');
         return;
       }
+      showDashboard();
+    }
 
-      container.innerHTML = recent.map(t => `
-        <div class="extrato-item">
-          <div class="extrato-left">
-            <span class="extrato-icon ${t.type}">${t.type === 'income' ? '↗' : '↘'}</span>
-            <div>
-              <span class="extrato-title">${escapeHtml(t.name)}</span>
-              <span class="extrato-sub">${escapeHtml(t.category)} • ${new Date(t.date+"T12:00:00").toLocaleDateString("pt-BR")}</span>
-            </div>
+    async function logout() {
+      atualizarPresencaOnline(false);
+      localStorage.removeItem('pwa_user');
+      const { signOut } = window.firebaseAuthModules;
+      try { await signOut(window.auth); } catch (e) {}
+      location.reload();
+    }
+
+    function showDashboard() {
+      document.getElementById('sec-login').classList.add('hidden');
+      document.getElementById('sec-pendente').classList.add('hidden');
+      document.getElementById('sec-dashboard').classList.remove('hidden');
+      document.getElementById('btn-logout').classList.remove('hidden');
+      document.getElementById('btn-menu-lateral').classList.remove('hidden');
+      document.getElementById('container-btn-chat').classList.remove('hidden');
+
+      const isAdmin = (currentUser.email === ADMIN_EMAIL || currentUser.isAdmin);
+      document.getElementById('user-role-badge').innerText = `${currentUser.email} (${isAdmin ? 'Admin' : 'Usuário'})`;
+      
+      if (isAdmin) {
+        document.getElementById('drawer-admin-config').classList.remove('hidden');
+        document.getElementById('drawer-admin-usuarios').classList.remove('hidden');
+        document.getElementById('drawer-receita-card').classList.add('hidden');
+        document.getElementById('card-despesas-box').classList.remove('hidden');
+        document.getElementById('cards-resumo-container').className = "grid grid-cols-2 gap-3";
+      } else {
+        document.getElementById('drawer-receita-card').classList.remove('hidden');
+        // Usuário comum vê apenas 1 card (Saldo Restante em destaque)
+        document.getElementById('card-despesas-box').classList.add('hidden');
+        document.getElementById('cards-resumo-container').className = "grid grid-cols-1 gap-3";
+      }
+      ouvirDadosFirebase();
+    }
+
+    function ouvirDadosFirebase() {
+      const { collection, onSnapshot, doc } = window.firebaseModules;
+      const db = window.db;
+
+      onSnapshot(doc(db, "financeiro", "config"), (docSnap) => {
+        if (docSnap.exists()) {
+          const dados = docSnap.data();
+          appData.receitas = dados.receitas || {};
+          appData.rendasExtras = dados.rendasExtras || {};
+          appData.despesasFixas = dados.despesasFixas || {};
+          renderUI();
+        }
+      });
+
+      onSnapshot(collection(db, "gastos"), (snapshot) => {
+        appData.gastos = [];
+        snapshot.forEach(docSnap => { appData.gastos.push({ id: docSnap.id, ...docSnap.data() }); });
+        appData.gastos.sort((a, b) => a.timestamp - b.timestamp);
+        atualizarMenuLateralMeses();
+        renderUI();
+      });
+
+      onSnapshot(collection(db, "mensagens"), (snapshot) => {
+        appData.mensagens = [];
+        snapshot.forEach(docSnap => { appData.mensagens.push({ id: docSnap.id, ...docSnap.data() }); });
+        appData.mensagens.sort((a, b) => a.timestamp - b.timestamp);
+        renderUI();
+      });
+
+      onSnapshot(collection(db, "usuarios"), (snapshot) => {
+        appData.usuarios = [];
+        let adminOnline = false;
+        snapshot.forEach(docSnap => {
+          const u = { id: docSnap.id, ...docSnap.data() };
+          appData.usuarios.push(u);
+          if ((u.email === ADMIN_EMAIL || u.isAdmin) && u.online) adminOnline = true;
+        });
+        atualizarIndicadorAdminOnline(adminOnline);
+        const isAdmin = (currentUser.email === ADMIN_EMAIL || currentUser.isAdmin);
+        if (isAdmin) { renderizarMenuUsuarios(); }
+        atualizarSelectDestinatarios();
+      });
+    }
+
+    function atualizarMenuLateralMeses() {
+      const listaMesesDiv = document.getElementById('drawer-lista-meses');
+      const mesAtualDiv = document.getElementById('drawer-mes-atual');
+      if (!listaMesesDiv) return;
+
+      const mesesSet = new Set();
+      mesesSet.add(mesSelecionado);
+      appData.gastos.forEach(g => { if (g.mesAno) mesesSet.add(g.mesAno); });
+
+      const mesesOrdenados = Array.from(mesesSet).sort().reverse();
+      listaMesesDiv.innerHTML = '';
+
+      mesesOrdenados.forEach(m => {
+        const [ano, mes] = m.split('-');
+        const nomeMes = new Date(ano, mes - 1).toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+        const textoFormatado = nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1);
+
+        if (m === mesSelecionado) mesAtualDiv.innerText = textoFormatado;
+
+        const btn = document.createElement('button');
+        btn.className = `w-full text-left p-2.5 rounded-xl font-medium transition text-xs ${m === mesSelecionado ? 'bg-blue-600 text-white font-bold' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`;
+        btn.innerText = textoFormatado;
+        btn.onclick = () => { mesSelecionado = m; fecharMenuLateral(); atualizarMenuLateralMeses(); renderUI(); };
+        listaMesesDiv.appendChild(btn);
+      });
+    }
+
+    async function salvarReceita() {
+      const valor = parseFloat(document.getElementById('input-receita').value);
+      if (isNaN(valor)) { mostrarNotificacao("Digite um valor válido para a renda."); return; }
+      const { doc, setDoc } = window.firebaseModules;
+      appData.receitas[mesSelecionado] = valor;
+      await setDoc(doc(window.db, "financeiro", "config"), { receitas: appData.receitas, rendasExtras: appData.rendasExtras, despesasFixas: appData.despesasFixas }, { merge: true });
+      document.getElementById('input-receita').value = '';
+      mostrarNotificacao("Renda principal atualizada com sucesso!");
+    }
+
+    async function adicionarRendaExtra() {
+      const nome = document.getElementById('extra-nome').value.trim();
+      const valor = parseFloat(document.getElementById('extra-valor').value);
+      if (!nome || isNaN(valor)) { mostrarNotificacao("Preencha a descrição e o valor da renda extra."); return; }
+
+      if (!appData.rendasExtras[mesSelecionado]) appData.rendasExtras[mesSelecionado] = [];
+      appData.rendasExtras[mesSelecionado].push({ id: Date.now(), nome, valor });
+
+      const { doc, setDoc } = window.firebaseModules;
+      await setDoc(doc(window.db, "financeiro", "config"), { receitas: appData.receitas, rendasExtras: appData.rendasExtras, despesasFixas: appData.despesasFixas }, { merge: true });
+      document.getElementById('extra-nome').value = '';
+      document.getElementById('extra-valor').value = '';
+      mostrarNotificacao("Renda extra adicionada com sucesso!");
+    }
+
+    async function excluirRendaExtra(idExtra) {
+      if (!confirm("Remover esta renda extra?")) return;
+      appData.rendasExtras[mesSelecionado] = appData.rendasExtras[mesSelecionado].filter(e => e.id !== idExtra);
+      const { doc, setDoc } = window.firebaseModules;
+      await setDoc(doc(window.db, "financeiro", "config"), { receitas: appData.receitas, rendasExtras: appData.rendasExtras, despesasFixas: appData.despesasFixas }, { merge: true });
+    }
+
+    async function adicionarDespesaFixa() {
+      const nome = document.getElementById('fixa-nome').value.trim();
+      const valor = parseFloat(document.getElementById('fixa-valor').value);
+      if (!nome || isNaN(valor)) { mostrarNotificacao("Preencha o nome e o valor da despesa fixa."); return; }
+
+      if (!appData.despesasFixas[mesSelecionado]) appData.despesasFixas[mesSelecionado] = [];
+      appData.despesasFixas[mesSelecionado].push({ id: Date.now(), nome, valor });
+
+      const { doc, setDoc } = window.firebaseModules;
+      await setDoc(doc(window.db, "financeiro", "config"), { receitas: appData.receitas, rendasExtras: appData.rendasExtras, despesasFixas: appData.despesasFixas }, { merge: true });
+      document.getElementById('fixa-nome').value = '';
+      document.getElementById('fixa-valor').value = '';
+      mostrarNotificacao("Despesa fixa fixada com sucesso!");
+    }
+
+    async function excluirDespesaFixa(idFixa) {
+      if (!confirm("Remover esta despesa fixa?")) return;
+      appData.despesasFixas[mesSelecionado] = appData.despesasFixas[mesSelecionado].filter(f => f.id !== idFixa);
+      const { doc, setDoc } = window.firebaseModules;
+      await setDoc(doc(window.db, "financeiro", "config"), { receitas: appData.receitas, rendasExtras: appData.rendasExtras, despesasFixas: appData.despesasFixas }, { merge: true });
+    }
+
+    async function adicionarGasto(e) {
+      e.preventDefault();
+      const nome = document.getElementById('gasto-nome').value.trim();
+      const valor = parseFloat(document.getElementById('gasto-valor').value);
+      if (!nome || isNaN(valor)) return;
+
+      const { collection, addDoc } = window.firebaseModules;
+      await addDoc(collection(window.db, "gastos"), {
+        usuario: currentUser.email, nome, valor, mesAno: mesSelecionado,
+        timestamp: Date.now(), data: new Date().toLocaleDateString('pt-BR')
+      });
+      document.getElementById('gasto-nome').value = '';
+      document.getElementById('gasto-valor').value = '';
+    }
+
+    async function excluirGasto(idGasto) {
+      if (!confirm("Apagar gasto?")) return;
+      const { doc, deleteDoc } = window.firebaseModules;
+      await deleteDoc(doc(window.db, "gastos", idGasto));
+    }
+
+    async function excluirUsuario(idUsuario) {
+      if (!confirm("Banir usuário?")) return;
+      const { doc, deleteDoc } = window.firebaseModules;
+      await deleteDoc(doc(window.db, "usuarios", idUsuario));
+    }
+
+    async function alterarStatusUsuario(idUsuario, status) {
+      const { doc, updateDoc } = window.firebaseModules;
+      await updateDoc(doc(window.db, "usuarios", idUsuario), { aprovado: status });
+    }
+
+    async function excluirMensagem(idMsg) {
+      if (!confirm("Apagar esta mensagem?")) return;
+      const { doc, deleteDoc } = window.firebaseModules;
+      await deleteDoc(doc(window.db, "mensagens", idMsg));
+    }
+
+    function renderizarMenuUsuarios() {
+      const divUsuarios = document.getElementById('drawer-lista-usuarios');
+      if (!divUsuarios) return;
+      divUsuarios.innerHTML = '';
+      appData.usuarios.forEach(u => {
+        if (u.email === ADMIN_EMAIL || u.isAdmin) return;
+        const item = document.createElement('div');
+        item.className = "flex justify-between items-center p-2.5 bg-slate-50 rounded-xl border text-xs";
+        item.innerHTML = `
+          <div class="truncate mr-2">
+            <span class="font-bold block truncate">${u.nome}</span>
+            <span class="text-[10px] text-slate-500 block truncate">${u.email}</span>
           </div>
-          <b class="${t.type === 'income' ? 'green-text' : 'red-text'}">${t.type === 'income' ? '+' : '−'} ${money(t.amount)}</b>
-        </div>
-      `).join("");
+          <div class="flex items-center gap-1.5 shrink-0">
+            <input type="checkbox" ${u.aprovado ? 'checked' : ''} onchange="alterarStatusUsuario('${u.id}', this.checked)" class="w-4 h-4 text-blue-600 rounded">
+            <button onclick="excluirUsuario('${u.id}')" class="text-rose-600 font-bold p-1">✕</button>
+          </div>
+        `;
+        divUsuarios.appendChild(item);
+      });
     }
 
-    function renderCategoryOptions() {
-      const select = $("category-filter");
-      const value = select.value;
-      const present = [...new Set(transactions.map(t => t.category))].sort();
-      select.innerHTML = '<option value="all">Todas</option>' + present.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
-      select.value = present.includes(value) ? value : "all";
+    async function enviarMensagem(e) {
+      e.preventDefault();
+      const txt = document.getElementById('chat-input').value.trim();
+      if (!txt) return;
+      let destinatario = document.getElementById('chat-destinatario').value;
+
+      const { collection, addDoc } = window.firebaseModules;
+      await addDoc(collection(window.db, "mensagens"), {
+        autor: currentUser.email, destinatario, texto: txt, timestamp: Date.now(),
+        hora: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+      });
+      document.getElementById('chat-input').value = '';
     }
 
-    function renderHistory() {
-      const type = $("type-filter").value;
-      const category = $("category-filter").value;
-      const list = transactions.filter(t => (type === "all" || t.type === type) && (category === "all" || t.category === category));
+    function atualizarIndicadorAdminOnline(online) {
+      const dot = document.getElementById('status-dot');
+      const text = document.getElementById('status-text');
+      if (!dot) return;
+      dot.className = `w-2 h-2 rounded-full ${online ? 'bg-emerald-400 animate-pulse' : 'bg-slate-300'}`;
+      text.innerText = online ? "Online" : "Offline";
+    }
 
-      $("transaction-list").innerHTML = list.length ? list.map(t => `
-        <tr class="${t.type === "expense" && t.paid ? "paid-row" : ""}">
-          <td class="description-cell"><span class="type-icon ${t.type}">${t.type === "income" ? "↗" : "↘"}</span>${escapeHtml(t.name)}</td>
-          <td><span class="category-pill">${escapeHtml(t.category)}</span></td>
-          <td>${new Date(t.date+"T12:00:00").toLocaleDateString("pt-BR")}</td>
-          <td class="${t.type === "income" ? "value-income" : "value-expense"}">${t.type === "income" ? "+" : "−"} ${money(t.amount)}</td>
-          <td>${t.type === "income" ? '<span class="paid-badge">Recebido</span>' : t.paid ? '<span class="paid-badge">✓ Pago</span>' : '<span class="pending-badge">◷ Pendente</span>'}</td>
-          <td>
-            ${t.type === "expense" ? `<button class="status-btn" data-toggle="${t.id}" title="Marcar Pago/Pendente">${t.paid ? "↶" : "✓"}</button>` : ""}
-            <button class="delete-btn" data-delete="${t.id}" title="Excluir">×</button>
-          </td>
-        </tr>
-      `).join("") : '<tr><td colspan="6" class="empty-state" style="text-align:center; padding:20px;"><span>✦</span><b>Nenhum lançamento</b></td></tr>';
-
-      $("transaction-list").querySelectorAll("[data-toggle]").forEach(btn => btn.addEventListener("click", async () => {
-        if (!isAdmin) { showToast("Apenas o Administrador."); return; }
-        const item = transactions.find(t => t.id === btn.dataset.toggle);
-        if (item) {
-          await db.collection("transactions").doc(item.id).update({ paid: !item.paid });
-          showToast("Status de pagamento atualizado!");
+    function atualizarSelectDestinatarios() {
+      const select = document.getElementById('chat-destinatario');
+      if (!select) return;
+      select.innerHTML = '<option value="todos">Todos (Geral)</option>';
+      appData.usuarios.forEach(u => {
+        if (u.email !== currentUser.email) {
+          const opt = document.createElement('option');
+          opt.value = u.email;
+          opt.innerText = u.nome ? `${u.nome} (${u.email})` : u.email;
+          select.appendChild(opt);
         }
-      }));
+      });
+      // Adiciona o Admin se o usuário atual não for o admin
+      if (currentUser.email !== ADMIN_EMAIL) {
+        const optAdmin = document.createElement('option');
+        optAdmin.value = ADMIN_EMAIL;
+        optAdmin.innerText = "Administrador (Giliard)";
+        select.appendChild(optAdmin);
+      }
+    }
 
-      $("transaction-list").querySelectorAll("[data-delete]").forEach(btn => btn.addEventListener("click", async () => {
-        if (!isAdmin) { showToast("Apenas o Administrador."); return; }
-        if (confirm("Deseja excluir este lançamento?")) {
-          await db.collection("transactions").doc(btn.dataset.delete).delete();
-          showToast("Lançamento excluído.");
+    function renderUI() {
+      const receitaPrincipal = appData.receitas[mesSelecionado] || 0;
+      const extrasMes = appData.rendasExtras[mesSelecionado] || [];
+      const totalExtras = extrasMes.reduce((acc, e) => acc + e.valor, 0);
+      const receitaTotal = receitaPrincipal + totalExtras;
+
+      document.getElementById('drawer-valor-receita').innerText = `R$ ${receitaTotal.toFixed(2)}`;
+
+      const listaExtrasDiv = document.getElementById('drawer-lista-extras-user');
+      if (listaExtrasDiv) {
+        listaExtrasDiv.innerHTML = '';
+        extrasMes.forEach(ex => {
+          const divItem = document.createElement('div');
+          divItem.className = "flex justify-between items-center text-xs text-emerald-800 bg-emerald-100/60 p-1.5 rounded-lg";
+          divItem.innerHTML = `
+            <span class="truncate mr-1">+ ${ex.nome}: <strong>R$ ${ex.valor.toFixed(2)}</strong></span>
+            <button onclick="excluirRendaExtra(${ex.id})" class="text-rose-600 font-bold px-1">✕</button>
+          `;
+          listaExtrasDiv.appendChild(divItem);
+        });
+      }
+
+      const fixasMes = appData.despesasFixas[mesSelecionado] || [];
+      const totalFixas = fixasMes.reduce((acc, f) => acc + f.valor, 0);
+
+      const gastosMes = appData.gastos.filter(g => g.mesAno === mesSelecionado);
+      const totalGastosDiarios = gastosMes.reduce((acc, item) => acc + item.valor, 0);
+      const totalDespesas = totalFixas + totalGastosDiarios;
+      const saldo = receitaTotal - totalDespesas;
+
+      document.getElementById('val-despesas').innerText = `R$ ${totalDespesas.toFixed(2)}`;
+      document.getElementById('val-saldo').innerText = `R$ ${saldo.toFixed(2)}`;
+
+      const isAdmin = (currentUser.email === ADMIN_EMAIL || currentUser.isAdmin);
+      const listaEl = document.getElementById('lista-gastos');
+      listaEl.innerHTML = '';
+
+      fixasMes.forEach(f => {
+        const li = document.createElement('li');
+        li.className = "py-3 px-2 flex justify-between items-center border-b border-emerald-100 bg-emerald-50/50 rounded-xl mb-1 text-sm";
+        li.innerHTML = `
+          <div class="truncate mr-2"><span class="font-bold text-emerald-900">${f.nome} (Fixa)</span></div>
+          <div class="flex items-center gap-2 shrink-0">
+            <span class="font-semibold text-rose-600">- R$ ${f.valor.toFixed(2)}</span>
+            ${isAdmin ? `<button onclick="excluirDespesaFixa(${f.id})" class="text-rose-500 font-bold p-1">✕</button>` : ''}
+          </div>
+        `;
+        listaEl.appendChild(li);
+      });
+
+      gastosMes.slice().reverse().forEach(gasto => {
+        const li = document.createElement('li');
+        li.className = "py-3 px-2 flex justify-between items-center border-b border-slate-100 text-sm";
+        li.innerHTML = `
+          <div class="truncate mr-2">
+            <span class="font-bold text-slate-700 truncate block">${gasto.nome}</span>
+            <span class="text-xs text-slate-400 block">${gasto.usuario}</span>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <span class="font-semibold text-rose-600">- R$ ${gasto.valor.toFixed(2)}</span>
+            ${isAdmin ? `<button onclick="excluirGasto('${gasto.id}')" class="text-rose-500 font-bold p-1">✕</button>` : ''}
+          </div>
+        `;
+        listaEl.appendChild(li);
+      });
+
+      const chatEl = document.getElementById('chat-messages');
+      chatEl.innerHTML = '';
+      let alertaUrgente = null;
+
+      appData.mensagens.forEach(m => {
+        const eAutor = (m.autor === currentUser.email);
+        const relevante = isAdmin || eAutor || m.destinatario === "todos" || m.destinatario === currentUser.email;
+        if (relevante) {
+          const div = document.createElement('div');
+          div.className = `p-2.5 rounded-2xl max-w-[85%] text-sm relative group ${eAutor ? 'bg-indigo-600 text-white ml-auto' : 'bg-slate-200 text-slate-800'}`;
+          div.innerHTML = `
+            <div class="font-bold text-[10px] opacity-80 flex justify-between gap-4">
+              <span>Para: ${m.destinatario} | De: ${m.autor}</span>
+              <button onclick="excluirMensagem('${m.id}')" class="opacity-60 hover:opacity-100 font-bold">✕</button>
+            </div>
+            <div class="mt-0.5">${m.texto}</div>
+          `;
+          chatEl.appendChild(div);
+          if (!isAdmin && m.autor === ADMIN_EMAIL && (m.destinatario === "todos" || m.destinatario === currentUser.email)) {
+            alertaUrgente = m.texto;
+          }
         }
-      }));
+      });
+
+      if (alertaUrgente && !isAdmin) {
+        mostrarNotificacao(alertaUrgente, "Mensagem do Administrador");
+      }
+      chatEl.scrollTop = chatEl.scrollHeight;
+      renderChart(receitaTotal, totalDespesas, fixasMes, gastosMes);
     }
 
-    function escapeHtml(val) {
-      return String(val).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    function renderChart(receitaTotal, totalDespesas, fixasMes, gastosMes) {
+      const ctx = document.getElementById('chartDespesas').getContext('2d');
+      const agrupado = {};
+      fixasMes.forEach(f => { agrupado[f.nome + ' (Fixa)'] = f.valor; });
+      gastosMes.forEach(g => { agrupado[g.nome] = (agrupado[g.nome] || 0) + g.valor; });
+
+      const labels = Object.keys(agrupado);
+      const valores = Object.values(agrupado);
+
+      let chartLabels = [];
+      let chartData = [];
+      let chartColors = [];
+
+      if (receitaTotal <= 0 && valores.length === 0) {
+        chartLabels = ['Sem dados'];
+        chartData = [1];
+        chartColors = ['#cbd5e1'];
+      } else if (valores.length === 0) {
+        // Se tem receita e nenhum gasto, exibe a rosca 100% verde com o valor total disponível
+        chartLabels = ['Disponível'];
+        chartData = [receitaTotal];
+        chartColors = ['#10b981'];
+      } else {
+        chartLabels = labels;
+        chartData = valores;
+        chartColors = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#64748b'];
+      }
+
+      if (chartInstance) chartInstance.destroy();
+      chartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: chartLabels,
+          datasets: [{ data: chartData, backgroundColor: chartColors }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } } }
+      });
     }
 
-    $("today-label").textContent = new Date().toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "short" }).toUpperCase();
-    $("month-name").textContent = new Date().toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+    function checkConnection() {
+      window.addEventListener('online', () => document.getElementById('status-offline')?.classList.add('hidden'));
+      window.addEventListener('offline', () => document.getElementById('status-offline')?.classList.remove('hidden'));
+    }
+
+    function initManifest() {
+      const manifestData = { name: "Finanças Pro", short_name: "Finanças", start_url: "./", display: "standalone", background_color: "#ffffff", theme_color: "#1e40af", icons: [{ src: "https://cdn-icons-png.flaticon.com/512/3135/3135706.png", sizes: "192x192", type: "image/png" }] };
+      document.getElementById('manifest-placeholder').setAttribute('href', URL.createObjectURL(new Blob([JSON.stringify(manifestData)], {type: 'application/json'})));
+    }
+
+    function initServiceWorker() {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register(URL.createObjectURL(new Blob([`self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => caches.match(e.request))));`], { type: 'text/javascript' })));
+      }
+    }
   </script>
 </body>
 </html>
