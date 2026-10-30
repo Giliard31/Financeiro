@@ -2,15 +2,15 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <meta name="theme-color" content="#090d16">
-  <meta name="description" content="Controle financeiro completo com gestão de administradores, comparativo mensal e poupança.">
+  <meta name="description" content="Controle financeiro seguro com aprovação e chat em tempo real.">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Meu Controle">
   <title>Meu Controle Financeiro</title>
 
-  <!-- PWA Web Manifest Embutido com Ícone -->
+  <!-- PWA Manifest -->
   <link rel="manifest" href='data:application/manifest+json,{"name":"Meu Controle Financeiro","short_name":"MeuControle","start_url":".","display":"standalone","background_color":"#090d16","theme_color":"#090d16","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/2953/2953363.png","sizes":"512x512","type":"image/png"}]}'>
 
   <!-- Firebase SDKs (Compat) -->
@@ -40,208 +40,215 @@
     }
 
     * { box-sizing: border-box; }
-    body { margin: 0; background: var(--bg); color: var(--text-main); font-family: 'DM Sans', sans-serif; overflow-x: hidden; }
+    body { margin: 0; background: var(--bg); color: var(--text-main); font-family: 'DM Sans', sans-serif; overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
 
     /* AUTH SCREEN */
     #auth-screen {
-      position: fixed; inset: 0; background: var(--bg); display: grid; place-items: center; z-index: 9999; padding: 20px;
+      position: fixed; inset: 0; background: var(--bg); display: grid; place-items: center; z-index: 9999; padding: 16px;
     }
     .auth-card {
-      background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 20px; padding: 32px; width: min(400px, 100%); box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+      background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 20px; padding: 24px; width: min(380px, 100%); box-shadow: 0 25px 50px rgba(0,0,0,0.5);
     }
-    .auth-card h2 { font: 800 22px 'Manrope', sans-serif; margin: 0 0 6px; }
-    .auth-card p { font-size: 12px; color: var(--text-muted); margin: 0 0 20px; }
+    .auth-card h2 { font: 800 20px 'Manrope', sans-serif; margin: 0 0 6px; }
+    .auth-card p { font-size: 11px; color: var(--text-muted); margin: 0 0 16px; line-height: 1.4; }
     .auth-card label { display: block; font-size: 11px; font-weight: 700; color: var(--text-muted); margin: 12px 0 4px; }
     .auth-card input {
-      width: 100%; border: 1px solid var(--card-border); border-radius: 10px; padding: 11px; font: 500 13px 'DM Sans', sans-serif; color: var(--text-main); background: var(--navy); outline: none;
+      width: 100%; border: 1px solid var(--card-border); border-radius: 10px; padding: 12px; font: 500 14px 'DM Sans', sans-serif; color: var(--text-main); background: var(--navy); outline: none;
     }
-    .auth-card input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2); }
     .auth-btn {
-      margin-top: 20px; width: 100%; border: 0; border-radius: 10px; background: var(--accent); color: #fff; padding: 13px; font: 700 12px 'DM Sans', sans-serif; cursor: pointer; transition: opacity 0.2s;
+      margin-top: 18px; width: 100%; border: 0; border-radius: 10px; background: var(--accent); color: #fff; padding: 12px; font: 700 12px 'DM Sans', sans-serif; cursor: pointer;
     }
-    .auth-btn:hover { opacity: 0.9; }
     .auth-switch { text-align: center; font-size: 11px; color: var(--text-muted); margin-top: 14px; cursor: pointer; text-decoration: underline; }
 
-    .app-shell { min-height: 100vh; display: flex; }
+    /* APP SHELL & MOBILE RESPONSIVENESS */
+    .app-shell { min-height: 100vh; display: flex; flex-direction: row; }
     .sidebar {
-      width: 250px; background: var(--navy); border-right: 1px solid var(--card-border); color: white; position: fixed; inset: 0 auto 0 0; padding: 28px 20px; display: flex; flex-direction: column; z-index: 100; transition: transform 0.3s ease;
+      width: 240px; background: var(--navy); border-right: 1px solid var(--card-border); color: white; position: fixed; inset: 0 auto 0 0; padding: 20px 16px; display: flex; flex-direction: column; z-index: 100; transition: transform 0.3s ease;
     }
-    .brand { display: flex; align-items: center; gap: 12px; padding: 0 8px 30px; }
+    .brand { display: flex; align-items: center; gap: 10px; padding: 0 4px 20px; }
     .brand-mark {
-      width: 42px; height: 42px; border-radius: 12px; background: linear-gradient(135deg, #10b981, #059669); color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 18px; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+      width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, #10b981, #059669); color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 16px;
     }
-    .brand strong { display: block; font: 800 16px 'Manrope', sans-serif; }
-    .brand small { font-size: 9px; letter-spacing: 2px; color: var(--text-muted); }
+    .brand strong { display: block; font: 800 14px 'Manrope', sans-serif; }
+    .brand small { font-size: 8px; letter-spacing: 1.5px; color: var(--text-muted); }
 
-    .side-label { font-size: 10px; letter-spacing: 1.5px; color: var(--text-muted); padding: 0 10px 10px; font-weight: 700; }
+    .side-label { font-size: 9px; letter-spacing: 1px; color: var(--text-muted); padding: 0 8px 8px; font-weight: 700; }
     .nav-item {
-      color: var(--text-muted); text-decoration: none; padding: 11px 14px; border-radius: 10px; margin: 2px 0; font-size: 13px; font-weight: 500; display: flex; gap: 10px; align-items: center; cursor: pointer; transition: all 0.2s;
+      color: var(--text-muted); text-decoration: none; padding: 10px 12px; border-radius: 8px; margin: 2px 0; font-size: 12px; font-weight: 500; display: flex; gap: 8px; align-items: center; cursor: pointer;
     }
     .nav-item:hover { background: rgba(255,255,255,0.05); color: #fff; }
     .nav-item.active { background: var(--accent); color: #fff; font-weight: 700; }
 
-    .sidebar-bottom { margin-top: auto; border-top: 1px solid var(--card-border); padding-top: 14px; }
-    .user-info { font-size: 11px; color: var(--text-main); font-weight: 700; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .sidebar-bottom { margin-top: auto; border-top: 1px solid var(--card-border); padding-top: 12px; }
+    .user-info { font-size: 10px; color: var(--text-main); font-weight: 700; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .logout-link { font-size: 10px; color: var(--red); cursor: pointer; display: inline-block; margin-top: 4px; }
 
-    .main { margin-left: 250px; padding: 36px 4% 30px; max-width: 1600px; width: 100%; }
-    .topbar { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
-    .eyebrow { font-size: 10px; letter-spacing: 2px; font-weight: 800; color: var(--accent); margin: 0 0 6px; }
-    .topbar h1 { font: 800 26px 'Manrope', sans-serif; margin: 0; }
-    .subheading { color: var(--text-muted); font-size: 12px; margin: 4px 0 0; }
+    .main { margin-left: 240px; padding: 20px 3% 20px; max-width: 1600px; width: 100%; }
+    .topbar { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; flex-wrap: wrap; gap: 10px; }
+    .eyebrow { font-size: 9px; letter-spacing: 1.5px; font-weight: 800; color: var(--accent); margin: 0 0 4px; }
+    .topbar h1 { font: 800 22px 'Manrope', sans-serif; margin: 0; }
+    .subheading { color: var(--text-muted); font-size: 11px; margin: 2px 0 0; }
 
-    /* SEÇÕES DE NAVEGAÇÃO */
     .tab-section { display: none; }
     .tab-section.active { display: block; }
 
-    .summary-grid { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 16px; }
-    .summary-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 20px; min-height: 120px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+    .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .summary-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; padding: 16px; min-height: 105px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
     .balance-card { background: linear-gradient(135deg, #1e1b4b, #0f172a); border-color: #312e81; }
-    .card-top { display: flex; justify-content: space-between; align-items: center; color: var(--text-muted); font-size: 11px; }
-    .icon-bubble { width: 30px; height: 30px; border-radius: 9px; background: rgba(255,255,255,0.05); display: grid; place-items: center; font-size: 15px; }
+    .card-top { display: flex; justify-content: space-between; align-items: center; color: var(--text-muted); font-size: 10px; }
+    .icon-bubble { width: 26px; height: 26px; border-radius: 8px; background: rgba(255,255,255,0.05); display: grid; place-items: center; font-size: 13px; }
     .icon-bubble.green { background: var(--green-glow); color: var(--green); }
     .icon-bubble.red { background: var(--red-glow); color: var(--red); }
-    .big-value { display: block; font: 800 26px 'Manrope', sans-serif; margin: 10px 0 4px; }
-    .metric { display: block; font: 800 22px 'Manrope', sans-serif; margin: 10px 0 4px; }
+    .big-value { display: block; font: 800 22px 'Manrope', sans-serif; margin: 8px 0 2px; }
+    .metric { display: block; font: 800 18px 'Manrope', sans-serif; margin: 8px 0 2px; }
     .green-text { color: var(--green); } .red-text { color: var(--red); }
 
-    .entry-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0; }
+    .entry-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }
     .action-card {
-      border: 1px solid var(--card-border); background: var(--card-bg); border-radius: 14px; padding: 15px 18px; display: flex; align-items: center; gap: 14px; text-align: left; cursor: pointer; transition: 0.2s; color: var(--text-main);
+      border: 1px solid var(--card-border); background: var(--card-bg); border-radius: 12px; padding: 12px 14px; display: flex; align-items: center; gap: 10px; text-align: left; cursor: pointer; color: var(--text-main);
     }
-    .action-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
-    .action-card.disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
-    .income-action { border-left: 4px solid var(--green); }
-    .expense-action { border-left: 4px solid var(--red); }
-    .action-icon { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; font-size: 18px; font-weight: 700; }
+    .action-card.disabled { opacity: 0.4; cursor: not-allowed; }
+    .income-action { border-left: 3px solid var(--green); }
+    .expense-action { border-left: 3px solid var(--red); }
+    .action-icon { width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; font-size: 16px; font-weight: 700; flex-shrink: 0; }
     .income-action .action-icon { background: var(--green-glow); color: var(--green); }
     .expense-action .action-icon { background: var(--red-glow); color: var(--red); }
-    .action-card b { display: block; font-size: 13px; }
-    .action-card small { display: block; font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+    .action-card b { display: block; font-size: 12px; }
+    .action-card small { display: block; font-size: 9px; color: var(--text-muted); margin-top: 1px; }
 
-    .content-grid { display: grid; grid-template-columns: 1.25fr 1fr; gap: 16px; }
-    .panel { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
-    .panel-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
-    .panel-heading h2 { font: 800 15px 'Manrope', sans-serif; margin: 0; }
-    .panel-heading p { font-size: 11px; color: var(--text-muted); margin: 3px 0 0; }
-    .mini-tag { font-size: 9px; letter-spacing: 1px; color: var(--accent); background: rgba(99,102,241,0.1); padding: 5px 9px; border-radius: 6px; font-weight: 700; }
+    .content-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px; }
+    .panel { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; padding: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+    .panel-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+    .panel-heading h2 { font: 800 13px 'Manrope', sans-serif; margin: 0; }
+    .panel-heading p { font-size: 10px; color: var(--text-muted); margin: 2px 0 0; }
+    .mini-tag { font-size: 8px; letter-spacing: 0.5px; color: var(--accent); background: rgba(99,102,241,0.1); padding: 3px 6px; border-radius: 4px; font-weight: 700; }
 
-    .chart-wrap { height: 210px; width: 100%; margin: 14px auto 4px; position: relative; }
+    .chart-wrap { height: 180px; width: 100%; margin: 10px auto 2px; position: relative; }
     .chart-center { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; pointer-events: none; }
-    .chart-center strong { font: 800 15px 'Manrope', sans-serif; }
-    .chart-center small { font-size: 8px; letter-spacing: 1px; color: var(--text-muted); margin-top: 2px; }
+    .chart-center strong { font: 800 13px 'Manrope', sans-serif; }
+    .chart-center small { font-size: 7px; letter-spacing: 0.5px; color: var(--text-muted); margin-top: 1px; }
 
-    .legend { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; margin-top: 14px; }
-    .legend-item { display: flex; align-items: center; gap: 7px; font-size: 11px; color: var(--text-muted); }
-    .legend-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
-    .legend-item b { margin-left: auto; color: var(--text-main); font-size: 11px; }
-    .empty-legend { grid-column: 1/-1; text-align: center; font-size: 11px; color: var(--text-muted); padding: 8px; }
+    .legend { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; margin-top: 10px; }
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--text-muted); }
+    .legend-dot { width: 6px; height: 6px; border-radius: 50%; flex: none; }
+    .legend-item b { margin-left: auto; color: var(--text-main); font-size: 10px; }
+    .empty-legend { grid-column: 1/-1; text-align: center; font-size: 10px; color: var(--text-muted); padding: 6px; }
 
-    .payment-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 18px 0; }
-    .payment-box { border-radius: 12px; padding: 13px; }
+    .payment-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 14px 0; }
+    .payment-box { border-radius: 10px; padding: 10px; }
     .paid-box { background: var(--green-glow); border: 1px solid rgba(16,185,129,0.2); }
     .pending-box { background: var(--red-glow); border: 1px solid rgba(239,68,68,0.2); }
-    .payment-symbol { font-size: 13px; font-weight: 800; }
+    .payment-symbol { font-size: 12px; font-weight: 800; }
     .paid-box .payment-symbol, .paid-box strong { color: var(--green); }
     .pending-box .payment-symbol, .pending-box strong { color: var(--red); }
-    .payment-box small { display: block; font-size: 10px; color: var(--text-muted); margin: 5px 0 2px; }
-    .payment-box strong { font: 800 17px 'Manrope', sans-serif; }
+    .payment-box small { display: block; font-size: 9px; color: var(--text-muted); margin: 3px 0 1px; }
+    .payment-box strong { font: 800 15px 'Manrope', sans-serif; }
 
-    .progress-heading { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-bottom: 6px; }
-    .progress-track { height: 7px; border-radius: 8px; background: rgba(255,255,255,0.05); overflow: hidden; }
-    .progress-fill { height: 100%; width: 0%; background: var(--green); border-radius: 8px; transition: width 0.4s ease; }
-    .helper-note { font-size: 10px; line-height: 1.4; color: var(--text-muted); margin: 12px 0 0; }
+    .progress-heading { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted); margin-bottom: 4px; }
+    .progress-track { height: 6px; border-radius: 6px; background: rgba(255,255,255,0.05); overflow: hidden; }
+    .progress-fill { height: 100%; width: 0%; background: var(--green); border-radius: 6px; }
+    .helper-note { font-size: 9px; line-height: 1.3; color: var(--text-muted); margin: 10px 0 0; }
 
-    .history-panel { margin-top: 20px; }
-    .history-heading { align-items: center; margin-bottom: 18px; }
+    .history-panel { margin-top: 16px; }
+    .history-heading { align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }
+    .history-tools { display: flex; gap: 6px; width: 100%; }
     .history-tools select {
-      border: 1px solid var(--card-border); border-radius: 8px; background: var(--navy); padding: 8px 10px; color: var(--text-main); font: 500 11px 'DM Sans', sans-serif; outline: none;
+      flex: 1; border: 1px solid var(--card-border); border-radius: 8px; background: var(--navy); padding: 8px; color: var(--text-main); font: 500 11px 'DM Sans', sans-serif; outline: none;
     }
 
-    .table-wrap { overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; min-width: 650px; }
-    th { text-align: left; font-size: 9px; letter-spacing: 1.5px; color: var(--text-muted); font-weight: 700; padding: 11px 10px; border-bottom: 1px solid var(--card-border); }
-    td { padding: 13px 10px; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 12px; color: var(--text-muted); }
+    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table { width: 100%; border-collapse: collapse; min-width: 580px; }
+    th { text-align: left; font-size: 8px; letter-spacing: 1px; color: var(--text-muted); font-weight: 700; padding: 10px 8px; border-bottom: 1px solid var(--card-border); }
+    td { padding: 11px 8px; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 11px; color: var(--text-muted); }
     .description-cell { font-weight: 600; color: var(--text-main); }
-    .type-icon { display: inline-grid; place-items: center; width: 25px; height: 25px; border-radius: 8px; margin-right: 8px; font-weight: 700; }
+    .type-icon { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 6px; margin-right: 6px; font-weight: 700; font-size: 10px; }
     .type-icon.expense { background: var(--red-glow); color: var(--red); }
     .type-icon.income { background: var(--green-glow); color: var(--green); }
-    .category-pill { background: rgba(255,255,255,0.05); padding: 4px 8px; border-radius: 6px; font-size: 10px; color: var(--text-main); }
+    .category-pill { background: rgba(255,255,255,0.05); padding: 3px 6px; border-radius: 5px; font-size: 9px; color: var(--text-main); }
     .value-expense { color: var(--red); font-weight: 700; } .value-income { color: var(--green); font-weight: 700; }
-    .paid-badge, .pending-badge { font-size: 9px; font-weight: 700; padding: 4px 7px; border-radius: 6px; white-space: nowrap; }
+    .paid-badge, .pending-badge { font-size: 8px; font-weight: 700; padding: 3px 6px; border-radius: 5px; white-space: nowrap; }
     .paid-badge { color: var(--green); background: var(--green-glow); }
     .pending-badge { color: #f59e0b; background: rgba(245,158,11,0.15); }
-    .status-btn, .delete-btn { border: 0; background: transparent; cursor: pointer; padding: 5px; border-radius: 6px; }
-    .status-btn { color: var(--text-muted); font-size: 14px; }
-    .delete-btn { color: var(--text-muted); font-size: 15px; }
+    .status-btn, .delete-btn { border: 0; background: transparent; cursor: pointer; padding: 4px; border-radius: 5px; }
+    .status-btn { color: var(--text-muted); font-size: 13px; }
+    .delete-btn { color: var(--text-muted); font-size: 14px; }
 
-    /* PAINEL ADMIN DE USUÁRIOS */
-    .admin-panel { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 20px; margin-bottom: 20px; }
-    .user-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 12px; flex-wrap: wrap; gap: 10px; }
-    .user-controls { display: flex; gap: 16px; align-items: center; }
-    .user-controls label { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 11px; }
-    .checkbox-liberar { width: 16px; height: 16px; cursor: pointer; accent-color: var(--green); }
-    .checkbox-admin { width: 16px; height: 16px; cursor: pointer; accent-color: var(--accent); }
+    /* ADMIN PANEL */
+    .admin-panel { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; padding: 16px; margin-bottom: 16px; }
+    .user-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 11px; flex-wrap: wrap; gap: 8px; }
+    .user-controls { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .user-controls label { display: flex; align-items: center; gap: 4px; cursor: pointer; font-size: 10px; }
+    .checkbox-liberar, .checkbox-admin { width: 15px; height: 15px; cursor: pointer; }
 
-    /* COMPARATIVO MENSAL */
-    .compare-cards { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 20px; }
-    .compare-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 18px; }
-    .compare-card small { display: block; font-size: 10px; color: var(--text-muted); margin-bottom: 6px; }
-    .compare-card strong { font: 800 20px 'Manrope', sans-serif; display: block; }
-    .compare-card span { font-size: 11px; font-weight: 700; margin-top: 4px; display: inline-block; }
+    /* COMPARATIVO & POUPANÇA MOBILE */
+    .compare-cards { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 16px; }
+    .compare-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; padding: 14px; }
+    .compare-card small { display: block; font-size: 9px; color: var(--text-muted); margin-bottom: 4px; }
+    .compare-card strong { font: 800 18px 'Manrope', sans-serif; display: block; }
+    .compare-card span { font-size: 10px; font-weight: 700; margin-top: 2px; display: inline-block; }
 
-    /* POUPANÇA BANNER & CARDS */
-    .savings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
-    .savings-card { background: linear-gradient(135deg, #2e1065, #0f172a); border: 1px solid #581c87; border-radius: 16px; padding: 22px; }
-    .savings-card small { color: #d8b4fe; font-size: 11px; }
-    .savings-card strong { font: 800 28px 'Manrope', sans-serif; color: #fff; margin: 8px 0; display: block; }
+    .savings-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 16px; }
+    .savings-card { background: linear-gradient(135deg, #2e1065, #0f172a); border: 1px solid #581c87; border-radius: 14px; padding: 16px; }
+    .savings-card small { color: #d8b4fe; font-size: 10px; }
+    .savings-card strong { font: 800 22px 'Manrope', sans-serif; color: #fff; margin: 6px 0; display: block; }
 
-    /* WIDGET DE CHAT FLUTUANTE */
-    #chat-widget { position: fixed; bottom: 20px; right: 20px; z-index: 1000; }
+    /* CHAT WIDGET */
+    #chat-widget { position: fixed; bottom: 16px; right: 16px; z-index: 1000; }
     #chat-toggle-btn {
-      background: var(--accent); color: #fff; border: 0; width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; font-size: 22px; cursor: pointer; box-shadow: 0 6px 20px rgba(99,102,241,0.4); position: relative; transition: transform 0.2s;
+      background: var(--accent); color: #fff; border: 0; width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; font-size: 18px; cursor: pointer; box-shadow: 0 4px 15px rgba(99,102,241,0.4); position: relative;
     }
-    #chat-toggle-btn:hover { transform: scale(1.05); }
-    .chat-badge {
-      position: absolute; top: -2px; right: -2px; background: var(--red); color: #fff; font-size: 10px; font-weight: 800; width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; border: 2px solid var(--bg);
-    }
-    .online-indicator { width: 10px; height: 10px; border-radius: 50%; background: var(--text-muted); display: inline-block; margin-right: 6px; border: 2px solid var(--bg); }
-    .online-indicator.online { background: var(--green); box-shadow: 0 0 6px var(--green); }
+    .chat-badge { position: absolute; top: -2px; right: -2px; background: var(--red); color: #fff; font-size: 9px; font-weight: 800; width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; border: 2px solid var(--bg); }
+    .online-indicator { width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); display: inline-block; margin-right: 4px; }
+    .online-indicator.online { background: var(--green); box-shadow: 0 0 5px var(--green); }
 
     #chat-box {
-      position: absolute; bottom: 65px; right: 0; width: min(340px, calc(100vw - 40px)); height: 420px; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; display: flex; flex-direction: column; box-shadow: 0 15px 40px rgba(0,0,0,0.5); overflow: hidden; display: none;
+      position: absolute; bottom: 55px; right: 0; width: min(320px, calc(100vw - 32px)); height: 380px; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; display: flex; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.5); overflow: hidden; display: none;
     }
-    .chat-header { background: var(--navy); padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--card-border); }
-    .chat-header h4 { margin: 0; font-size: 13px; font-weight: 700; display: flex; align-items: center; }
-    .chat-messages { flex: 1; padding: 14px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; font-size: 11px; }
-    .chat-msg { max-width: 78%; padding: 9px 12px; border-radius: 10px; line-height: 1.4; word-break: break-word; }
-    .chat-msg.sent { background: var(--accent); color: #fff; align-self: flex-end; border-bottom-right-radius: 2px; }
-    .chat-msg.received { background: var(--navy); color: var(--text-main); align-self: flex-start; border-bottom-left-radius: 2px; border: 1px solid var(--card-border); }
-    .chat-input-area { padding: 10px; background: var(--navy); border-top: 1px solid var(--card-border); display: flex; gap: 8px; }
-    .chat-input-area input { flex: 1; border: 1px solid var(--card-border); border-radius: 8px; padding: 9px; font-size: 11px; background: var(--card-bg); color: var(--text-main); outline: none; }
-    .chat-send-btn { background: var(--accent); color: #fff; border: 0; padding: 0 14px; border-radius: 8px; font-weight: 700; cursor: pointer; }
+    .chat-header { background: var(--navy); padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--card-border); }
+    .chat-header h4 { margin: 0; font-size: 12px; font-weight: 700; display: flex; align-items: center; }
+    .chat-messages { flex: 1; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; font-size: 11px; }
+    .chat-msg { max-width: 80%; padding: 8px 10px; border-radius: 8px; line-height: 1.3; word-break: break-word; }
+    .chat-msg.sent { background: var(--accent); color: #fff; align-self: flex-end; }
+    .chat-msg.received { background: var(--navy); color: var(--text-main); align-self: flex-start; border: 1px solid var(--card-border); }
+    .chat-input-area { padding: 8px; background: var(--navy); border-top: 1px solid var(--card-border); display: flex; gap: 6px; }
+    .chat-input-area input { flex: 1; border: 1px solid var(--card-border); border-radius: 6px; padding: 8px; font-size: 11px; background: var(--card-bg); color: var(--text-main); outline: none; }
+    .chat-send-btn { background: var(--accent); color: #fff; border: 0; padding: 0 12px; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 11px; }
 
     /* PWA BANNER */
-    .pwa-banner {
-      background: linear-gradient(135deg, #312e81, #1e1b4b); border: 1px solid #4338ca; border-radius: 14px; padding: 14px 18px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-    }
-    .btn-install { background: #6366f1; color: #fff; border: 0; padding: 8px 14px; border-radius: 8px; font-weight: 700; font-size: 11px; cursor: pointer; }
+    .pwa-banner { background: linear-gradient(135deg, #312e81, #1e1b4b); border: 1px solid #4338ca; border-radius: 12px; padding: 12px 14px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .btn-install { background: #6366f1; color: #fff; border: 0; padding: 6px 12px; border-radius: 6px; font-weight: 700; font-size: 10px; cursor: pointer; }
 
-    /* DIALOG MODAL */
-    dialog { border: 1px solid var(--card-border); background: var(--navy); color: var(--text-main); border-radius: 18px; padding: 0; width: min(420px, calc(100% - 32px)); box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
-    dialog::backdrop { background: rgba(0,0,0,0.7); backdrop-filter: blur(3px); }
-    dialog form { padding: 26px; }
-    .dialog-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
-    .dialog-top h2 { font: 800 20px 'Manrope', sans-serif; margin: 0; }
-    .close-btn { border: 0; background: rgba(255,255,255,0.05); border-radius: 8px; width: 30px; height: 30px; font-size: 18px; color: var(--text-muted); cursor: pointer; }
-    dialog label { display: block; font-size: 11px; font-weight: 700; color: var(--text-muted); margin: 14px 0 6px; }
-    dialog input, dialog select { width: 100%; border: 1px solid var(--card-border); border-radius: 9px; padding: 11px; font: 500 12px 'DM Sans', sans-serif; color: var(--text-main); outline: none; background: var(--card-bg); }
-    .amount-input { display: flex; align-items: center; border: 1px solid var(--card-border); border-radius: 9px; padding-left: 12px; background: var(--card-bg); color: var(--text-muted); font-size: 12px; }
+    /* DIALOG MODALS */
+    dialog { border: 1px solid var(--card-border); background: var(--navy); color: var(--text-main); border-radius: 16px; padding: 0; width: min(380px, calc(100% - 24px)); box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
+    dialog::backdrop { background: rgba(0,0,0,0.7); backdrop-filter: blur(2px); }
+    dialog form { padding: 20px; }
+    .dialog-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+    .dialog-top h2 { font: 800 18px 'Manrope', sans-serif; margin: 0; }
+    .close-btn { border: 0; background: rgba(255,255,255,0.05); border-radius: 6px; width: 28px; height: 28px; font-size: 16px; color: var(--text-muted); cursor: pointer; }
+    dialog label { display: block; font-size: 10px; font-weight: 700; color: var(--text-muted); margin: 12px 0 4px; }
+    dialog input, dialog select { width: 100%; border: 1px solid var(--card-border); border-radius: 8px; padding: 10px; font: 500 12px 'DM Sans', sans-serif; color: var(--text-main); outline: none; background: var(--card-bg); }
+    .amount-input { display: flex; align-items: center; border: 1px solid var(--card-border); border-radius: 8px; padding-left: 10px; background: var(--card-bg); color: var(--text-muted); font-size: 12px; }
     .amount-input input { border: 0; background: transparent; }
-    .submit-btn { margin-top: 22px; width: 100%; border: 0; border-radius: 9px; background: var(--accent); color: #fff; padding: 13px; font: 700 11px 'DM Sans', sans-serif; cursor: pointer; }
+    .submit-btn { margin-top: 18px; width: 100%; border: 0; border-radius: 8px; background: var(--accent); color: #fff; padding: 12px; font: 700 11px 'DM Sans', sans-serif; cursor: pointer; }
 
-    .toast { position: fixed; bottom: 24px; left: 50%; transform: translate(-50%, 20px); opacity: 0; background: #1e293b; border: 1px solid var(--card-border); color: #fff; padding: 12px 18px; border-radius: 10px; font-size: 11px; transition: all 0.25s ease; pointer-events: none; z-index: 2000; }
+    .toast { position: fixed; bottom: 20px; left: 50%; transform: translate(-50%, 20px); opacity: 0; background: #1e293b; border: 1px solid var(--card-border); color: #fff; padding: 10px 16px; border-radius: 8px; font-size: 11px; transition: all 0.25s ease; pointer-events: none; z-index: 2000; }
     .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+    /* RESPONSIVIDADE TABLET / DESKTOP */
+    @media(min-width: 768px) {
+      .main { padding: 32px 4% 24px; }
+      .summary-grid { grid-template-columns: 1.3fr 1fr 1fr; gap: 16px; }
+      .summary-card { padding: 20px; min-height: 120px; }
+      .big-value { font-size: 26px; }
+      .metric { font-size: 22px; }
+      .content-grid { grid-template-columns: 1.25fr 1fr; gap: 16px; }
+      .compare-cards { grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+      .savings-grid { grid-template-columns: 1fr 1fr; gap: 16px; }
+      .history-tools { width: auto; }
+      .history-tools select { width: auto; }
+      dialog { width: min(420px, calc(100% - 32px)); }
+      dialog form { padding: 26px; }
+    }
   </style>
 </head>
 <body>
@@ -268,27 +275,26 @@
         <div class="brand-mark">R$</div>
         <div><strong>Meu Controle</strong><small>FINANCEIRO</small></div>
       </div>
-      <div class="side-label">MENU PRINCIPAL</div>
+      <div class="side-label">MENU</div>
       <a class="nav-item active" data-tab="tab-overview"><span>▦</span> Visão geral</a>
       <a class="nav-item" data-tab="tab-compare"><span>📊</span> Comparativo</a>
       <a class="nav-item" data-tab="tab-savings"><span>🐷</span> Poupança</a>
       <a class="nav-item" data-tab="tab-history"><span>↕</span> Lançamentos</a>
       <div class="sidebar-bottom">
         <span class="user-info" id="sidebar-user-email">Carregando...</span>
-        <span class="logout-link" id="logout-btn">Sair da conta</span>
+        <span class="logout-link" id="logout-btn">Sair</span>
       </div>
     </aside>
 
     <main class="main">
-      <!-- BANNER DE INSTALAÇÃO PWA -->
+      <!-- BANNER PWA -->
       <div class="pwa-banner" id="pwa-banner" style="display: none;">
         <div>
-          <b style="color:#fff; font-size:13px; display:block;">Instalar o aplicativo no celular?</b>
-          <small style="color:#c7d2fe; font-size:11px;">Acesse diretamente pela sua tela inicial.</small>
+          <b style="color:#fff; font-size:11px; display:block;">Instalar no celular?</b>
+          <small style="color:#c7d2fe; font-size:9px;">Acesse direto da tela inicial.</small>
         </div>
         <div>
           <button class="btn-install" id="install-pwa-btn">Instalar</button>
-          <button class="close-btn" id="dismiss-pwa-btn" style="margin-left:8px; color:#fff;">×</button>
         </div>
       </div>
 
@@ -300,57 +306,55 @@
             <h1>Visão geral</h1>
             <p class="subheading">Acompanhe seu dinheiro com clareza.</p>
           </div>
-          <button class="month-chip" id="month-filter" type="button" style="border:1px solid var(--card-border); background:var(--card-bg); border-radius:10px; padding:10px 14px; color:var(--text-main); font-weight:600; font-size:11px;">▣ <span id="month-name">Este mês</span></button>
+          <button class="month-chip" id="month-filter" type="button" style="border:1px solid var(--card-border); background:var(--card-bg); border-radius:8px; padding:8px 12px; color:var(--text-main); font-weight:600; font-size:10px;">▣ <span id="month-name">Este mês</span></button>
         </header>
 
-        <!-- PAINEL DE APROVAÇÃO DO ADMIN -->
+        <!-- PAINEL ADMIN -->
         <div id="admin-section" style="display: none;">
           <div class="panel admin-panel">
             <div class="panel-heading">
-              <div><h2>Aprovação & Permissões de Usuários</h2><p>Gerencie o acesso e perfil de administrador dos usuários.</p></div>
+              <div><h2>Aprovação & Permissões</h2><p>Gerencie acessos e perfis de administrador.</p></div>
               <span class="mini-tag">ADMIN</span>
             </div>
-            <div id="pending-users-list" style="margin-top: 14px;">
-              <small style="color: var(--text-muted);">Nenhum usuário pendente no momento.</small>
+            <div id="pending-users-list" style="margin-top: 12px;">
+              <small style="color: var(--text-muted);">Nenhum usuário pendente.</small>
             </div>
           </div>
         </div>
 
         <section class="summary-grid">
           <article class="summary-card balance-card">
-            <div class="card-top"><span>Saldo do período</span><span class="icon-bubble">◈</span></div>
+            <div class="card-top"><span>Saldo</span><span class="icon-bubble">◈</span></div>
             <strong class="big-value" id="balance">R$ 0,00</strong>
-            <small>Receitas menos despesas</small>
+            <small>Entradas - Saídas</small>
           </article>
           <article class="summary-card">
             <div class="card-top"><span>Receitas</span><span class="icon-bubble green">↗</span></div>
             <strong class="metric green-text" id="income-total">R$ 0,00</strong>
-            <small>Entradas registradas</small>
+            <small>Entradas</small>
           </article>
           <article class="summary-card">
             <div class="card-top"><span>Despesas</span><span class="icon-bubble red">↘</span></div>
             <strong class="metric red-text" id="expense-total">R$ 0,00</strong>
-            <small>Saídas registradas</small>
+            <small>Saídas</small>
           </article>
         </section>
 
         <section class="entry-actions">
           <button class="action-card income-action" id="open-income">
             <span class="action-icon">＋</span>
-            <span><b>Adicionar receita</b><small id="income-perm-msg">Apenas Administrador</small></span>
-            <span class="action-arrow">→</span>
+            <span><b>Adicionar receita</b><small id="income-perm-msg">Restrito Admin</small></span>
           </button>
           <button class="action-card expense-action" id="open-expense">
             <span class="action-icon">－</span>
-            <span><b>Adicionar despesa</b><small id="expense-perm-msg">Apenas Administrador</small></span>
-            <span class="action-arrow">→</span>
+            <span><b>Adicionar despesa</b><small id="expense-perm-msg">Restrito Admin</small></span>
           </button>
         </section>
 
         <section class="content-grid">
           <article class="panel chart-panel">
             <div class="panel-heading">
-              <div><h2>Despesas por categoria</h2><p>Divisão de gastos do mês atual.</p></div>
+              <div><h2>Despesas por categoria</h2><p>Gastos do mês atual.</p></div>
               <span class="mini-tag">DIVISÃO</span>
             </div>
             <div class="chart-wrap">
@@ -362,16 +366,16 @@
 
           <article class="panel payment-panel">
             <div class="panel-heading">
-              <div><h2>Situação das despesas</h2><p>O que já foi pago e o que falta.</p></div>
+              <div><h2>Situação das despesas</h2><p>Pago e pendente.</p></div>
               <span class="mini-tag">RESUMO</span>
             </div>
             <div class="payment-summary">
-              <div class="payment-box paid-box"><span class="payment-symbol">✓</span><small>Total pago</small><strong id="paid-total">R$ 0,00</strong></div>
+              <div class="payment-box paid-box"><span class="payment-symbol">✓</span><small>Pago</small><strong id="paid-total">R$ 0,00</strong></div>
               <div class="payment-box pending-box"><span class="payment-symbol">◷</span><small>Pendente</small><strong id="pending-total">R$ 0,00</strong></div>
             </div>
-            <div class="progress-heading"><span>Despesas quitadas</span><b id="paid-percent">0%</b></div>
+            <div class="progress-heading"><span>Quitadas</span><b id="paid-percent">0%</b></div>
             <div class="progress-track"><div class="progress-fill" id="paid-progress"></div></div>
-            <p class="helper-note">Apenas o Administrador pode alterar baixas e pagamentos.</p>
+            <p class="helper-note">Apenas o Admin pode dar baixa em pagamentos.</p>
           </article>
         </section>
       </div>
@@ -380,9 +384,9 @@
       <div class="tab-section" id="tab-compare">
         <header class="topbar">
           <div>
-            <p class="eyebrow">ANÁLISE DE DESEMPENHO</p>
+            <p class="eyebrow">ANÁLISE</p>
             <h1>Comparativo de Meses</h1>
-            <p class="subheading">Veja como seus gastos estão se comportando ao longo do tempo.</p>
+            <p class="subheading">Comportamento dos seus gastos.</p>
           </div>
         </header>
 
@@ -390,67 +394,66 @@
           <div class="compare-card">
             <small>Gasto Mês Atual</small>
             <strong id="comp-current-expense">R$ 0,00</strong>
-            <span id="comp-diff-tag" class="green-text">0% vs Mês Anterior</span>
+            <span id="comp-diff-tag" class="green-text">0% vs Anterior</span>
           </div>
           <div class="compare-card">
             <small>Gasto Mês Anterior</small>
             <strong id="comp-prev-expense">R$ 0,00</strong>
-            <small style="margin-top:4px;">Base de comparação</small>
           </div>
           <div class="compare-card">
-            <small>Maior Categoria de Gasto</small>
+            <small>Maior Categoria</small>
             <strong id="comp-top-cat">-</strong>
-            <small id="comp-top-cat-val" style="margin-top:4px;">R$ 0,00 neste mês</small>
+            <small id="comp-top-cat-val">R$ 0,00</small>
           </div>
         </section>
 
         <article class="panel">
           <div class="panel-heading">
-            <div><h2>Evolução Mensal (Entradas x Saídas)</h2><p>Gráfico vertical de receitas e despesas por mês.</p></div>
-            <span class="mini-tag">HISTÓRICO</span>
+            <div><h2>Evolução Mensal</h2><p>Receitas x Despesas.</p></div>
+            <span class="mini-tag">BARRAS</span>
           </div>
-          <div style="height: 280px; margin-top: 15px;">
+          <div style="height: 220px; margin-top: 12px;">
             <canvas id="bar-chart-compare"></canvas>
           </div>
         </article>
       </div>
 
-      <!-- ABA 3: POUPANÇA & INVESTIMENTOS -->
+      <!-- ABA 3: POUPANÇA -->
       <div class="tab-section" id="tab-savings">
         <header class="topbar">
           <div>
-            <p class="eyebrow">RESERVAS & INVESTIMENTOS</p>
+            <p class="eyebrow">RESERVA</p>
             <h1>Sua Poupança</h1>
-            <p class="subheading">Acompanhe seus aportes e crescimento da sua reserva.</p>
+            <p class="subheading">Acompanhe seus aportes.</p>
           </div>
-          <button class="submit-btn" id="open-savings-modal" style="margin:0; width:auto; padding:10px 16px;">+ Novo Aporte / Retirada</button>
+          <button class="submit-btn" id="open-savings-modal" style="margin:0; width:auto; padding:8px 12px; font-size:10px;">+ Operação</button>
         </header>
 
         <section class="savings-grid">
           <div class="savings-card">
             <small>SALDO TOTAL ACUMULADO</small>
             <strong id="savings-total-balance">R$ 0,00</strong>
-            <small id="savings-growth-msg">Calculando variação...</small>
+            <small id="savings-growth-msg">Calculando...</small>
           </div>
           <div class="savings-card" style="background: linear-gradient(135deg, #064e3b, #0f172a); border-color:#047857;">
             <small>APORTES NESTE MÊS</small>
             <strong id="savings-month-deposits">R$ 0,00</strong>
-            <small id="savings-month-diff">0% em relação ao mês anterior</small>
+            <small id="savings-month-diff">0% vs anterior</small>
           </div>
         </section>
 
         <article class="panel">
           <div class="panel-heading">
-            <div><h2>Histórico da Poupança</h2><p>Depósitos e retiradas gravados no sistema.</p></div>
+            <div><h2>Histórico da Poupança</h2></div>
             <span class="mini-tag">REGISTROS</span>
           </div>
-          <div class="table-wrap" style="margin-top: 15px;">
+          <div class="table-wrap" style="margin-top: 10px;">
             <table>
               <thead>
-                <tr><th>TIPO</th><th>DATA</th><th>VALOR</th><th>REGISTRADO POR</th></tr>
+                <tr><th>TIPO</th><th>DATA</th><th>VALOR</th><th>POR</th></tr>
               </thead>
               <tbody id="savings-list">
-                <tr><td colspan="4" style="text-align:center; padding:20px;">Nenhum registro de poupança ainda.</td></tr>
+                <tr><td colspan="4" style="text-align:center; padding:15px;">Nenhum registro.</td></tr>
               </tbody>
             </table>
           </div>
@@ -461,63 +464,63 @@
       <div class="tab-section" id="tab-history">
         <header class="topbar">
           <div>
-            <p class="eyebrow">REGISTRO DE OPERAÇÕES</p>
-            <h1>Histórico de Lançamentos</h1>
-            <p class="subheading">Filtragem e controle completo dos seus lançamentos.</p>
+            <p class="eyebrow">HISTÓRICO</p>
+            <h1>Lançamentos</h1>
+            <p class="subheading">Filtragem completa.</p>
           </div>
         </header>
 
         <section class="panel history-panel" style="margin-top:0;">
           <div class="panel-heading history-heading">
-            <div><h2>Todas as Transações</h2></div>
+            <div><h2>Transações</h2></div>
             <div class="history-tools">
               <select id="type-filter"><option value="all">Todos</option><option value="expense">Despesas</option><option value="income">Receitas</option></select>
-              <select id="category-filter"><option value="all">Todas as categorias</option></select>
+              <select id="category-filter"><option value="all">Categorias</option></select>
             </div>
           </div>
           <div class="table-wrap">
             <table>
               <thead>
-                <tr><th>DESCRIÇÃO</th><th>CATEGORIA</th><th>DATA</th><th>VALOR</th><th>SITUAÇÃO</th><th>AÇÕES</th></tr>
+                <tr><th>DESCRIÇÃO</th><th>CAT.</th><th>DATA</th><th>VALOR</th><th>SITUAÇÃO</th><th></th></tr>
               </thead>
               <tbody id="transaction-list">
-                <tr><td colspan="6" class="empty-state" style="text-align:center; padding:30px;"><span>✦</span><b>Nenhum lançamento encontrado</b></td></tr>
+                <tr><td colspan="6" class="empty-state" style="text-align:center; padding:20px;"><span>✦</span><b>Nenhum lançamento</b></td></tr>
               </tbody>
             </table>
           </div>
         </section>
       </div>
 
-      <footer><div>Sistema Financeiro Conectado ao Firebase.</div></footer>
+      <footer><div style="font-size:9px; color:var(--text-muted); text-align:center; margin-top:20px;">Meu Controle Financeiro • Firebase</div></footer>
     </main>
   </div>
 
-  <!-- WIDGET DE CHAT INTEGRADO -->
+  <!-- CHAT WIDGET -->
   <div id="chat-widget" style="display: none;">
-    <button id="chat-toggle-btn" title="Abrir Chat">💬<span class="chat-badge" id="chat-badge" style="display: none;">0</span></button>
+    <button id="chat-toggle-btn" title="Chat">💬<span class="chat-badge" id="chat-badge" style="display: none;">0</span></button>
     <div id="chat-box">
       <div class="chat-header">
         <h4><span class="online-indicator" id="peer-status-dot"></span><span id="chat-title">Chat Interno</span></h4>
-        <button class="close-btn" id="close-chat-btn" style="width:24px;height:24px;font-size:14px;">×</button>
+        <button class="close-btn" id="close-chat-btn" style="width:22px;height:22px;font-size:12px;">×</button>
       </div>
       <div class="chat-messages" id="chat-messages-container"></div>
       <form class="chat-input-area" id="chat-form">
-        <input id="chat-input" type="text" placeholder="Digite sua mensagem..." autocomplete="off" required>
+        <input id="chat-input" type="text" placeholder="Mensagem..." autocomplete="off" required>
         <button class="chat-send-btn" type="submit">Enviar</button>
       </form>
     </div>
   </div>
 
-  <!-- MODAL DE LANÇAMENTO DA RECEITA/DESPESA -->
+  <!-- MODAL TRANSAÇÃO -->
   <dialog id="entry-dialog">
     <form id="entry-form" method="dialog">
       <div class="dialog-top">
-        <div><span style="font-size:9px; letter-spacing:1px; font-weight:800; color:var(--accent);">NOVO LANÇAMENTO</span><h2 id="dialog-title">Adicionar despesa</h2></div>
+        <div><span style="font-size:8px; letter-spacing:1px; font-weight:800; color:var(--accent);">NOVO</span><h2 id="dialog-title">Adicionar</h2></div>
         <button class="close-btn" type="button" id="close-dialog">×</button>
       </div>
       <input type="hidden" id="entry-type" value="expense">
-      <label>Nome do lançamento</label>
-      <input id="entry-name" type="text" placeholder="Ex.: Compra no mercado" maxlength="60" required>
+      <label>Nome</label>
+      <input id="entry-name" type="text" placeholder="Ex.: Mercado" maxlength="60" required>
       <label>Valor (R$)</label>
       <div class="amount-input"><span>R$</span><input id="entry-amount" type="number" min="0.01" step="0.01" placeholder="0,00" required></div>
       <div id="income-kind-wrap" hidden>
@@ -534,27 +537,27 @@
       </div>
       <label>Data</label>
       <input id="entry-date" type="date" required>
-      <button class="submit-btn" type="submit">Registrar lançamento →</button>
+      <button class="submit-btn" type="submit">Registrar →</button>
     </form>
   </dialog>
 
-  <!-- MODAL DE POUPANÇA -->
+  <!-- MODAL POUPANÇA -->
   <dialog id="savings-dialog">
     <form id="savings-form" method="dialog">
       <div class="dialog-top">
-        <div><span style="font-size:9px; letter-spacing:1px; font-weight:800; color:var(--purple);">POUPANÇA & RESERVA</span><h2>Operação de Poupança</h2></div>
+        <div><span style="font-size:8px; letter-spacing:1px; font-weight:800; color:var(--purple);">RESERVA</span><h2>Poupança</h2></div>
         <button class="close-btn" type="button" id="close-savings-dialog">×</button>
       </div>
-      <label>Tipo de Operação</label>
+      <label>Operação</label>
       <select id="savings-type">
-        <option value="deposit">Depósito / Aporte (+)</option>
+        <option value="deposit">Depósito (+)</option>
         <option value="withdraw">Retirada (-)</option>
       </select>
       <label>Valor (R$)</label>
       <div class="amount-input"><span>R$</span><input id="savings-amount" type="number" min="0.01" step="0.01" placeholder="0,00" required></div>
       <label>Data</label>
       <input id="savings-date" type="date" required>
-      <button class="submit-btn" type="submit" style="background:var(--purple);">Confirmar Operação →</button>
+      <button class="submit-btn" type="submit" style="background:var(--purple);">Confirmar →</button>
     </form>
   </dialog>
 
@@ -599,7 +602,7 @@
       setTimeout(() => el.classList.remove("show"), 2800);
     }
 
-    // NAVEGAÇÃO DE ABAS
+    // NAVEGAÇÃO
     document.querySelectorAll(".nav-item").forEach(item => {
       item.addEventListener("click", () => {
         document.querySelectorAll(".nav-item").forEach(i => i.classList.remove("active"));
@@ -612,7 +615,7 @@
       });
     });
 
-    // PWA PROMPT
+    // PWA
     window.addEventListener("beforeinstallprompt", (e) => {
       e.preventDefault();
       deferredPrompt = e;
@@ -625,31 +628,31 @@
         deferredPrompt.prompt();
         const { outcome } = await deferredPrompt.userChoice;
         if (outcome === "accepted") {
-          showToast("Aplicativo instalado com sucesso!");
+          showToast("Instalado com sucesso!");
           $("pwa-banner").style.display = "none";
         }
         deferredPrompt = null;
       }
     });
-    $("dismiss-pwa-btn")?.addEventListener("click", () => $("pwa-banner").style.display = "none");
 
-    // AUTH SWITCH
     $("auth-switch-mode").addEventListener("click", () => {
       isRegisterMode = !isRegisterMode;
       $("auth-title").textContent = isRegisterMode ? "Criar Nova Conta" : "Entrar no Sistema";
-      $("auth-subtitle").textContent = isRegisterMode ? "Sua conta aguardará liberação do administrador." : "Informe seus dados para acessar o painel.";
+      $("auth-subtitle").textContent = isRegisterMode ? "O primeiro e-mail cadastrado será Administrador automático." : "Informe seus dados.";
       $("auth-submit-btn").textContent = isRegisterMode ? "Cadastrar →" : "Entrar →";
-      $("auth-switch-mode").textContent = isRegisterMode ? "Já tem uma conta? Faça login" : "Não tem uma conta? Cadastre-se";
+      $("auth-switch-mode").textContent = isRegisterMode ? "Já tem conta? Entrar" : "Não tem conta? Cadastre-se";
     });
 
-    // LOGIN & REGISTRO
+    // LOGIN & CADASTRO COM PRIMEIRO USUÁRIO ADMIN AUTOMÁTICO
     $("auth-form").addEventListener("submit", async e => {
       e.preventDefault();
       const email = $("auth-email").value.trim().toLowerCase();
       const pass = $("auth-pass").value.trim();
-      const isUserAdmin = email === "admin@admin.com";
 
       try {
+        const usersSnapshot = await db.collection("users_status").get();
+        const isFirstUser = usersSnapshot.empty;
+
         const userRef = db.collection("users_status").doc(email.replace(/[.#$[\]]/g, "_"));
         const docSnap = await userRef.get();
 
@@ -657,20 +660,20 @@
           if (docSnap.exists) { showToast("E-mail já cadastrado."); return; }
           await userRef.set({
             email, pass,
-            approved: isUserAdmin,
-            isAdmin: isUserAdmin,
+            approved: isFirstUser ? true : false, // Primeiro usuário já entra aprovado e admin
+            isAdmin: isFirstUser ? true : false,
             lastSeen: Date.now()
           });
-          showToast(isUserAdmin ? "Conta Admin criada!" : "Cadastro enviado! Aguarde aprovação.");
+          showToast(isFirstUser ? "Conta Administrador criada com sucesso!" : "Cadastro realizado! Aguarde liberação.");
           isRegisterMode = false;
           $("auth-switch-mode").click();
           return;
         }
 
-        if (!docSnap.exists) { showToast("Usuário não encontrado."); return; }
+        if (!docSnap.exists) { showToast("Usuário não encontrado. Cadastre-se."); return; }
         const data = docSnap.data();
         if (data.pass !== pass) { showToast("Senha incorreta."); return; }
-        if (!data.approved) { showToast("Seu acesso ainda aguarda liberação do administrador."); return; }
+        if (!data.approved) { showToast("Aguardando aprovação do administrador."); return; }
 
         currentUser = email;
         isAdmin = data.isAdmin || false;
@@ -679,21 +682,18 @@
         $("chat-widget").style.display = "block";
         $("sidebar-user-email").textContent = currentUser;
         
-        if (isAdmin) {
-          $("admin-section").style.display = "block";
-        }
+        if (isAdmin) $("admin-section").style.display = "block";
 
         initAppListeners();
-        showToast("Bem-vindo ao sistema!");
+        showToast("Bem-vindo!");
       } catch (err) {
         console.error(err);
-        showToast("Erro na conexão com Firebase.");
+        showToast("Erro de conexão com Firebase.");
       }
     });
 
     $("logout-btn").addEventListener("click", () => location.reload());
 
-    // OUVINTES EM TEMPO REAL
     function initAppListeners() {
       setInterval(() => {
         if (!currentUser) return;
@@ -734,28 +734,17 @@
       });
     }
 
-    // PAINEL ADMIN: APROVAÇÃO E CONCESSÃO DE ADMIN
     function renderPendingUsers(docs) {
       const container = $("pending-users-list");
       const users = docs.map(d => ({ id: d.id, ...d.data() }));
-      
-      if (!users.length) {
-        container.innerHTML = '<small style="color: var(--text-muted);">Nenhum usuário no sistema.</small>';
-        return;
-      }
+      if (!users.length) { container.innerHTML = '<small style="color: var(--text-muted);">Nenhum usuário.</small>'; return; }
 
       container.innerHTML = users.map(u => `
         <div class="user-row">
           <span><b>${u.email}</b> ${u.isAdmin ? '<span class="mini-tag">ADMIN</span>' : ''}</span>
           <div class="user-controls">
-            <label>
-              <input type="checkbox" class="checkbox-liberar" data-id="${u.id}" ${u.approved ? 'checked' : ''}>
-              Acesso Liberado
-            </label>
-            <label>
-              <input type="checkbox" class="checkbox-admin" data-id="${u.id}" ${u.isAdmin ? 'checked' : ''}>
-              Tornar Admin
-            </label>
+            <label><input type="checkbox" class="checkbox-liberar" data-id="${u.id}" ${u.approved ? 'checked' : ''}> Liberar</label>
+            <label><input type="checkbox" class="checkbox-admin" data-id="${u.id}" ${u.isAdmin ? 'checked' : ''}> Admin</label>
           </div>
         </div>
       `).join("");
@@ -763,14 +752,14 @@
       container.querySelectorAll(".checkbox-liberar").forEach(chk => {
         chk.addEventListener("change", async e => {
           await db.collection("users_status").doc(e.target.dataset.id).update({ approved: e.target.checked });
-          showToast(e.target.checked ? "Acesso liberado!" : "Acesso bloqueado.");
+          showToast(e.target.checked ? "Liberado!" : "Bloqueado.");
         });
       });
 
       container.querySelectorAll(".checkbox-admin").forEach(chk => {
         chk.addEventListener("change", async e => {
           await db.collection("users_status").doc(e.target.dataset.id).update({ isAdmin: e.target.checked });
-          showToast(e.target.checked ? "Permissão de Admin concedida!" : "Permissão de Admin removida.");
+          showToast("Permissão alterada!");
         });
       });
     }
@@ -779,11 +768,7 @@
     $("chat-toggle-btn").addEventListener("click", () => {
       chatOpen = !chatOpen;
       $("chat-box").style.display = chatOpen ? "flex" : "none";
-      if (chatOpen) {
-        unreadCount = 0;
-        $("chat-badge").style.display = "none";
-        const c = $("chat-messages-container"); c.scrollTop = c.scrollHeight;
-      }
+      if (chatOpen) { unreadCount = 0; $("chat-badge").style.display = "none"; }
     });
     $("close-chat-btn").addEventListener("click", () => { chatOpen = false; $("chat-box").style.display = "none"; });
 
@@ -799,7 +784,7 @@
       const c = $("chat-messages-container");
       c.innerHTML = msgs.map(m => `
         <div class="chat-msg ${m.sender === currentUser ? 'sent' : 'received'}">
-          ${m.sender !== currentUser ? `<div style="font-size:9px; font-weight:700; margin-bottom:2px; color:var(--accent);">${m.sender}</div>` : ''}
+          ${m.sender !== currentUser ? `<div style="font-size:8px; font-weight:700; margin-bottom:2px; color:var(--accent);">${m.sender}</div>` : ''}
           ${escapeHtml(m.text)}
         </div>
       `).join("");
@@ -811,25 +796,25 @@
       }
     }
 
-    // TRANSAÇÕES & PERMISSÕES
+    // PERMISSÕES
     function checkPermissions() {
       const openIncomeBtn = $("open-income");
       const openExpenseBtn = $("open-expense");
       if (!isAdmin) {
         openIncomeBtn.classList.add("disabled");
         openExpenseBtn.classList.add("disabled");
-        $("income-perm-msg").textContent = "Restrito ao Administrador";
-        $("expense-perm-msg").textContent = "Restrito ao Administrador";
+        $("income-perm-msg").textContent = "Restrito Admin";
+        $("expense-perm-msg").textContent = "Restrito Admin";
       } else {
         openIncomeBtn.classList.remove("disabled");
         openExpenseBtn.classList.remove("disabled");
-        $("income-perm-msg").textContent = "Salário ou dinheiro extra";
-        $("expense-perm-msg").textContent = "Registre um novo gasto";
+        $("income-perm-msg").textContent = "Receita ou extra";
+        $("expense-perm-msg").textContent = "Novo gasto";
       }
     }
 
     function openDialog(type) {
-      if (!isAdmin) { showToast("Apenas o Administrador pode cadastrar entradas/saídas."); return; }
+      if (!isAdmin) { showToast("Apenas o Administrador pode lançar valores."); return; }
       $("entry-type").value = type;
       $("entry-form").reset();
       $("entry-date").value = today();
@@ -850,7 +835,7 @@
       const name = $("entry-name").value.trim();
       const amount = Number($("entry-amount").value);
       const date = $("entry-date").value;
-      if (!name || !Number.isFinite(amount) || amount <= 0 || !date) { showToast("Confira os campos."); return; }
+      if (!name || !Number.isFinite(amount) || amount <= 0 || !date) return;
 
       const incomeKind = $("income-kind").value;
       await db.collection("transactions").add({
@@ -859,12 +844,12 @@
         paid: false, createdBy: currentUser, createdAt: Date.now()
       });
       $("entry-dialog").close();
-      showToast("Lançamento registrado!");
+      showToast("Salvo com sucesso!");
     });
 
-    // POUPANÇA MODAL & LÓGICA
+    // POUPANÇA
     $("open-savings-modal").addEventListener("click", () => {
-      if (!isAdmin) { showToast("Apenas o Administrador pode movimentar a poupança."); return; }
+      if (!isAdmin) { showToast("Apenas o Administrador."); return; }
       $("savings-form").reset();
       $("savings-date").value = today();
       $("savings-dialog").showModal();
@@ -879,51 +864,29 @@
       const date = $("savings-date").value;
       if (!Number.isFinite(amount) || amount <= 0 || !date) return;
 
-      await db.collection("savings").add({
-        type, amount, date, createdBy: currentUser, createdAt: Date.now()
-      });
+      await db.collection("savings").add({ type, amount, date, createdBy: currentUser, createdAt: Date.now() });
       $("savings-dialog").close();
-      showToast("Operação de poupança registrada!");
+      showToast("Poupança atualizada!");
     });
 
     function renderSavings() {
       const totalBalance = savingsRecords.reduce((acc, r) => acc + (r.type === "deposit" ? r.amount : -r.amount), 0);
-      
-      const thisMonthDeposits = savingsRecords
-        .filter(r => r.date.slice(0,7) === currentMonth && r.type === "deposit")
-        .reduce((s, r) => s + r.amount, 0);
-
-      const lastMonthObj = new Date(); lastMonthObj.setMonth(lastMonthObj.getMonth() - 1);
-      const lastMonthStr = lastMonthObj.toISOString().slice(0,7);
-      
-      const lastMonthDeposits = savingsRecords
-        .filter(r => r.date.slice(0,7) === lastMonthStr && r.type === "deposit")
-        .reduce((s, r) => s + r.amount, 0);
+      const thisMonthDeposits = savingsRecords.filter(r => r.date.slice(0,7) === currentMonth && r.type === "deposit").reduce((s, r) => s + r.amount, 0);
 
       $("savings-total-balance").textContent = money(totalBalance);
       $("savings-month-deposits").textContent = money(thisMonthDeposits);
-
-      if (lastMonthDeposits > 0) {
-        const diff = Math.round(((thisMonthDeposits - lastMonthDeposits) / lastMonthDeposits) * 100);
-        $("savings-month-diff").textContent = `${diff >= 0 ? '+' : ''}${diff}% em relação ao mês anterior`;
-      } else {
-        $("savings-month-diff").textContent = "Sem base no mês anterior";
-      }
-
       $("savings-list").innerHTML = savingsRecords.length ? savingsRecords.map(r => `
         <tr>
-          <td><b style="color:${r.type === 'deposit' ? 'var(--green)' : 'var(--red)'}">${r.type === 'deposit' ? 'Aporte (+)' : 'Retirada (-)'}</b></td>
+          <td><b style="color:${r.type === 'deposit' ? 'var(--green)' : 'var(--red)'}">${r.type === 'deposit' ? 'Depósito' : 'Retirada'}</b></td>
           <td>${new Date(r.date+"T12:00:00").toLocaleDateString("pt-BR")}</td>
           <td><b>${money(r.amount)}</b></td>
           <td>${r.createdBy || 'Admin'}</td>
         </tr>
-      `).join("") : '<tr><td colspan="4" style="text-align:center; padding:20px;">Nenhum registro de poupança ainda.</td></tr>';
+      `).join("") : '<tr><td colspan="4" style="text-align:center; padding:15px;">Nenhum registro.</td></tr>';
     }
 
-    // COMPARATIVO MENSAL
     function renderComparison() {
       const monthExpenses = transactions.filter(t => t.date.slice(0,7) === currentMonth && t.type === "expense").reduce((s,t) => s + t.amount, 0);
-      
       const lastMonthObj = new Date(); lastMonthObj.setMonth(lastMonthObj.getMonth() - 1);
       const lastMonthStr = lastMonthObj.toISOString().slice(0,7);
       const prevMonthExpenses = transactions.filter(t => t.date.slice(0,7) === lastMonthStr && t.type === "expense").reduce((s,t) => s + t.amount, 0);
@@ -933,22 +896,20 @@
 
       if (prevMonthExpenses > 0) {
         const diff = Math.round(((monthExpenses - prevMonthExpenses) / prevMonthExpenses) * 100);
-        $("comp-diff-tag").textContent = `${diff > 0 ? '+' : ''}${diff}% vs Mês Anterior`;
+        $("comp-diff-tag").textContent = `${diff > 0 ? '+' : ''}${diff}% vs Anterior`;
         $("comp-diff-tag").className = diff <= 0 ? "green-text" : "red-text";
       } else {
-        $("comp-diff-tag").textContent = "Sem dados do mês anterior";
+        $("comp-diff-tag").textContent = "Sem base anterior";
       }
 
-      // Maior Categoria
       const catTotals = {};
       transactions.filter(t => t.date.slice(0,7) === currentMonth && t.type === "expense").forEach(t => {
         catTotals[t.category] = (catTotals[t.category] || 0) + t.amount;
       });
       const topCat = Object.keys(catTotals).reduce((a, b) => catTotals[a] > catTotals[b] ? a : b, "-");
       $("comp-top-cat").textContent = topCat;
-      $("comp-top-cat-val").textContent = topCat !== "-" ? money(catTotals[topCat]) + " neste mês" : "Nenhum gasto";
+      $("comp-top-cat-val").textContent = topCat !== "-" ? money(catTotals[topCat]) : "R$ 0,00";
 
-      // Gráfico de Barras Verticais (Evolução 6 meses)
       const months = [];
       for (let i = 5; i >= 0; i--) {
         const d = new Date(); d.setMonth(d.getMonth() - i);
@@ -968,26 +929,21 @@
         data: {
           labels: monthLabels,
           datasets: [
-            { label: "Receitas", data: incData, backgroundColor: "#10b981", borderRadius: 6 },
-            { label: "Despesas", data: expData, backgroundColor: "#ef4444", borderRadius: 6 }
+            { label: "Receitas", data: incData, backgroundColor: "#10b981", borderRadius: 4 },
+            { label: "Despesas", data: expData, backgroundColor: "#ef4444", borderRadius: 4 }
           ]
         },
         options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { labels: { color: "#9ca3af", font: { family: "DM Sans" } } },
-            datalabels: { display: false }
-          },
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { labels: { color: "#9ca3af", font: { size: 10 } } }, datalabels: { display: false } },
           scales: {
-            x: { ticks: { color: "#9ca3af" }, grid: { display: false } },
-            y: { ticks: { color: "#9ca3af" }, grid: { color: "rgba(255,255,255,0.05)" } }
+            x: { ticks: { color: "#9ca3af", font: { size: 9 } }, grid: { display: false } },
+            y: { ticks: { color: "#9ca3af", font: { size: 9 } }, grid: { color: "rgba(255,255,255,0.05)" } }
           }
         }
       });
     }
 
-    // RENDER VISÃO GERAL
     function render() {
       checkPermissions();
       const monthTransactions = transactions.filter(t => t.date.slice(0,7) === currentMonth);
@@ -1032,14 +988,14 @@
           }]
         },
         options: {
-          responsive: true, maintainAspectRatio: false, cutout: "68%",
+          responsive: true, maintainAspectRatio: false, cutout: "65%",
           plugins: {
             legend: { display: false },
             datalabels: {
-              color: "#fff", font: { weight: "bold", size: 10 },
+              color: "#fff", font: { weight: "bold", size: 9 },
               formatter: (val) => {
                 const pct = Math.round((val / grandTotal) * 100);
-                return pct < 3 ? "" : `${pct}%`;
+                return pct < 4 ? "" : `${pct}%`;
               }
             }
           }
@@ -1048,14 +1004,14 @@
 
       $("chart-legend").innerHTML = labels.length ? labels.map((label, i) => `
         <div class="legend-item"><span class="legend-dot" style="background:${COLORS[categories.indexOf(label) % COLORS.length]}"></span><span>${escapeHtml(label)}</span><b>${money(values[i])}</b></div>
-      `).join("") : '<div class="empty-legend">Suas categorias aparecerão aqui.</div>';
+      `).join("") : '<div class="empty-legend">Sem categorias.</div>';
     }
 
     function renderCategoryOptions() {
       const select = $("category-filter");
       const value = select.value;
       const present = [...new Set(transactions.map(t => t.category))].sort();
-      select.innerHTML = '<option value="all">Todas as categorias</option>' + present.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+      select.innerHTML = '<option value="all">Todas</option>' + present.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
       select.value = present.includes(value) ? value : "all";
     }
 
@@ -1076,22 +1032,22 @@
             <button class="delete-btn" data-delete="${t.id}">×</button>
           </td>
         </tr>
-      `).join("") : '<tr><td colspan="6" class="empty-state" style="text-align:center; padding:30px;"><span>✦</span><b>Nenhum lançamento encontrado</b></td></tr>';
+      `).join("") : '<tr><td colspan="6" class="empty-state" style="text-align:center; padding:20px;"><span>✦</span><b>Nenhum lançamento</b></td></tr>';
 
       $("transaction-list").querySelectorAll("[data-toggle]").forEach(btn => btn.addEventListener("click", async () => {
-        if (!isAdmin) { showToast("Apenas o Administrador pode dar baixa em pagamentos."); return; }
+        if (!isAdmin) { showToast("Apenas o Administrador."); return; }
         const item = transactions.find(t => t.id === btn.dataset.toggle);
         if (item) {
           await db.collection("transactions").doc(item.id).update({ paid: !item.paid });
-          showToast(!item.paid ? "Despesa marcada como paga." : "Despesa voltou para pendente.");
+          showToast("Status atualizado!");
         }
       }));
 
       $("transaction-list").querySelectorAll("[data-delete]").forEach(btn => btn.addEventListener("click", async () => {
-        if (!isAdmin) { showToast("Apenas o Administrador pode excluir registros."); return; }
-        if (confirm("Deseja excluir este lançamento?")) {
+        if (!isAdmin) { showToast("Apenas o Administrador."); return; }
+        if (confirm("Excluir lançamento?")) {
           await db.collection("transactions").doc(btn.dataset.delete).delete();
-          showToast("Lançamento excluído.");
+          showToast("Excluído.");
         }
       }));
     }
@@ -1100,7 +1056,7 @@
       return String(val).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
     }
 
-    $("today-label").textContent = new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" }).toUpperCase();
+    $("today-label").textContent = new Date().toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "short" }).toUpperCase();
     $("month-name").textContent = new Date().toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
   </script>
 </body>
