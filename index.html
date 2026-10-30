@@ -319,7 +319,6 @@
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       deferredPrompt = e;
-      // Mostra o banner de instalação se não estiver rodando instalado
       if (!window.matchMedia('(display-mode: standalone)').matches) {
         document.getElementById('banner-instalacao').classList.remove('hidden');
       }
@@ -726,7 +725,8 @@
       const totalExtras = extrasMes.reduce((acc, e) => acc + e.valor, 0);
       const receitaTotal = receitaPrincipal + totalExtras;
 
-      document.getElementById('drawer-valor-receita').innerText = `R$ ${receitaTotal.toFixed(2)}`;
+      const drawerReceitaEl = document.getElementById('drawer-valor-receita');
+      if (drawerReceitaEl) drawerReceitaEl.innerText = `R$ ${receitaTotal.toFixed(2)}`;
 
       const listaExtrasDiv = document.getElementById('drawer-lista-extras-user');
       if (listaExtrasDiv) {
@@ -750,75 +750,90 @@
       const totalDespesas = totalFixas + totalGastosDiarios;
       const saldo = receitaTotal - totalDespesas;
 
-      document.getElementById('val-despesas').innerText = `R$ ${totalDespesas.toFixed(2)}`;
-      document.getElementById('val-saldo').innerText = `R$ ${saldo.toFixed(2)}`;
+      const valDespesasEl = document.getElementById('val-despesas');
+      const valSaldoEl = document.getElementById('val-saldo');
+      if (valDespesasEl) valDespesasEl.innerText = `R$ ${totalDespesas.toFixed(2)}`;
+      if (valSaldoEl) valSaldoEl.innerText = `R$ ${saldo.toFixed(2)}`;
 
       const isAdmin = (currentUser.email === ADMIN_EMAIL || currentUser.isAdmin);
       const listaEl = document.getElementById('lista-gastos');
-      listaEl.innerHTML = '';
+      if (listaEl) {
+        listaEl.innerHTML = '';
 
-      fixasMes.forEach(f => {
-        const li = document.createElement('li');
-        li.className = "py-3 px-2 flex justify-between items-center border-b border-emerald-100 bg-emerald-50/50 rounded-xl mb-1 text-sm";
-        li.innerHTML = `
-          <div class="truncate mr-2"><span class="font-bold text-emerald-900">${f.nome} (Fixa)</span></div>
-          <div class="flex items-center gap-2 shrink-0">
-            <span class="font-semibold text-rose-600">- R$ ${f.valor.toFixed(2)}</span>
-            ${isAdmin ? `<button onclick="excluirDespesaFixa(${f.id})" class="text-rose-500 font-bold p-1">✕</button>` : ''}
-          </div>
-        `;
-        listaEl.appendChild(li);
-      });
+        fixasMes.forEach(f => {
+          const li = document.createElement('li');
+          li.className = "py-3 px-2 flex justify-between items-center border-b border-emerald-100 bg-emerald-50/50 rounded-xl mb-1 text-sm";
+          li.innerHTML = `
+            <div class="truncate mr-2"><span class="font-bold text-emerald-900">${f.nome} (Fixa)</span></div>
+            <div class="flex items-center gap-2 shrink-0">
+              <span class="font-semibold text-rose-600">- R$ ${f.valor.toFixed(2)}</span>
+              ${isAdmin ? `<button onclick="excluirDespesaFixa(${f.id})" class="text-rose-500 font-bold p-1">✕</button>` : ''}
+            </div>
+          `;
+          listaEl.appendChild(li);
+        });
 
-      gastosMes.slice().reverse().forEach(gasto => {
-        const li = document.createElement('li');
-        li.className = "py-3 px-2 flex justify-between items-center border-b border-slate-100 text-sm";
-        li.innerHTML = `
-          <div class="truncate mr-2">
-            <span class="font-bold text-slate-700 truncate block">${gasto.nome}</span>
-            <span class="text-xs text-slate-400 block">${gasto.usuario}</span>
-          </div>
-          <div class="flex items-center gap-2 shrink-0">
-            <span class="font-semibold text-rose-600">- R$ ${gasto.valor.toFixed(2)}</span>
-            ${isAdmin ? `<button onclick="excluirGasto('${gasto.id}')" class="text-rose-500 font-bold p-1">✕</button>` : ''}
-          </div>
-        `;
-        listaEl.appendChild(li);
-      });
+        gastosMes.slice().reverse().forEach(gasto => {
+          const li = document.createElement('li');
+          li.className = "py-3 px-2 flex justify-between items-center border-b border-slate-100 text-sm";
+          li.innerHTML = `
+            <div class="truncate mr-2">
+              <span class="font-bold text-slate-700 truncate block">${gasto.nome}</span>
+              <span class="text-xs text-slate-400 block">${gasto.usuario}</span>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <span class="font-semibold text-rose-600">- R$ ${gasto.valor.toFixed(2)}</span>
+              ${isAdmin ? `<button onclick="excluirGasto('${gasto.id}')" class="text-rose-500 font-bold p-1">✕</button>` : ''}
+            </div>
+          `;
+          listaEl.appendChild(li);
+        });
+      }
 
       const chatEl = document.getElementById('chat-messages');
-      chatEl.innerHTML = '';
-      let alertaUrgente = null;
+      if (chatEl) {
+        chatEl.innerHTML = '';
+        let alertaUrgente = null;
 
-      appData.mensagens.forEach(m => {
-        const eAutor = (m.autor === currentUser.email);
-        const relevante = isAdmin || eAutor || m.destinatario === "todos" || m.destinatario === currentUser.email;
-        if (relevante) {
-          const div = document.createElement('div');
-          div.className = `p-2.5 rounded-2xl max-w-[85%] text-sm relative group ${eAutor ? 'bg-indigo-600 text-white ml-auto' : 'bg-slate-200 text-slate-800'}`;
-          div.innerHTML = `
-            <div class="font-bold text-[10px] opacity-80 flex justify-between gap-4">
-              <span>Para: ${m.destinatario} | De: ${m.autor}</span>
-              <button onclick="excluirMensagem('${m.id}')" class="opacity-60 hover:opacity-100 font-bold">✕</button>
-            </div>
-            <div class="mt-0.5">${m.texto}</div>
-          `;
-          chatEl.appendChild(div);
-          if (!isAdmin && m.autor === ADMIN_EMAIL && (m.destinatario === "todos" || m.destinatario === currentUser.email)) {
-            alertaUrgente = m.texto;
+        appData.mensagens.forEach(m => {
+          const eAutor = (m.autor === currentUser.email);
+          const relevante = isAdmin || eAutor || m.destinatario === "todos" || m.destinatario === currentUser.email;
+          if (relevante) {
+            const div = document.createElement('div');
+            div.className = `p-2.5 rounded-2xl max-w-[85%] text-sm relative group ${eAutor ? 'bg-indigo-600 text-white ml-auto' : 'bg-slate-200 text-slate-800'}`;
+            div.innerHTML = `
+              <div class="font-bold text-[10px] opacity-80 flex justify-between gap-4">
+                <span>Para: ${m.destinatario} | De: ${m.autor}</span>
+                <button onclick="excluirMensagem('${m.id}')" class="opacity-60 hover:opacity-100 font-bold">✕</button>
+              </div>
+              <div class="mt-0.5">${m.texto}</div>
+            `;
+            chatEl.appendChild(div);
+            if (!isAdmin && m.autor === ADMIN_EMAIL && (m.destinatario === "todos" || m.destinatario === currentUser.email)) {
+              alertaUrgente = m.texto;
+            }
           }
-        }
-      });
+        });
 
-      if (alertaUrgente && !isAdmin) {
-        mostrarNotificacao(alertaUrgente, "Mensagem do Administrador");
+        if (alertaUrgente && !isAdmin) {
+          mostrarNotificacao(alertaUrgente, "Mensagem do Administrador");
+        }
+        chatEl.scrollTop = chatEl.scrollHeight;
       }
-      chatEl.scrollTop = chatEl.scrollHeight;
-      renderChart(receitaTotal, totalDespesas, fixasMes, gastosMes);
+
+      // Executa o gráfico em segurança para não travar a UI
+      try {
+        renderChart(receitaTotal, totalDespesas, fixasMes, gastosMes);
+      } catch (err) {
+        console.error("Erro ao renderizar gráfico:", err);
+      }
     }
 
     function renderChart(receitaTotal, totalDespesas, fixasMes, gastosMes) {
-      const ctx = document.getElementById('chartDespesas').getContext('2d');
+      const canvasEl = document.getElementById('chartDespesas');
+      if (!canvasEl) return;
+      const ctx = canvasEl.getContext('2d');
+
       const agrupado = {};
       fixasMes.forEach(f => { agrupado[f.nome + ' (Fixa)'] = f.valor; });
       gastosMes.forEach(g => { agrupado[g.nome] = (agrupado[g.nome] || 0) + g.valor; });
@@ -835,12 +850,10 @@
         chartData = [1];
         chartColors = ['#cbd5e1'];
       } else if (valores.length === 0) {
-        // Se tem receita e nenhum gasto, exibe a rosca 100% verde com o valor total disponível
         chartLabels = ['Disponível'];
         chartData = [receitaTotal];
         chartColors = ['#10b981'];
       } else {
-        // Se houver gastos, exibe as despesas e o saldo restante (verde) na rosca
         chartLabels = [...labels];
         chartData = [...valores];
         chartColors = ['#ef4444', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#64748b'];
@@ -853,14 +866,26 @@
         }
       }
 
-      if (chartInstance) chartInstance.destroy();
+      if (chartInstance) {
+        chartInstance.destroy();
+      }
+
       chartInstance = new Chart(ctx, {
         type: 'doughnut',
         data: {
           labels: chartLabels,
           datasets: [{ data: chartData, backgroundColor: chartColors }]
         },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } } }
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { boxWidth: 10, font: { size: 10 } }
+            }
+          }
+        }
       });
     }
 
