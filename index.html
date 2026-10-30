@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#1e40af">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3135/3135706.png">
+  <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2933/2933116.png">
   <link rel="manifest" id="manifest-placeholder">
 
   <script src="https://cdn.tailwindcss.com"></script>
@@ -49,6 +49,20 @@
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans antialiased min-h-screen flex flex-col pt-16 overflow-x-hidden">
 
+  <!-- Botão Flutuante de Instalação (PWA) -->
+  <div id="banner-instalacao" class="hidden fixed bottom-5 left-5 right-5 sm:left-auto sm:right-5 z-50 bg-blue-900 text-white p-4 rounded-3xl shadow-2xl border border-blue-700 flex items-center justify-between gap-4 max-w-sm mx-auto">
+    <div class="flex items-center space-x-3">
+      <img src="https://cdn-icons-png.flaticon.com/512/2933/2933116.png" class="w-10 h-10 object-contain bg-white/10 p-1.5 rounded-2xl">
+      <div>
+        <h4 class="font-bold text-sm">Instalar Finanças Pro</h4>
+        <p class="text-xs text-blue-200">Adicione à tela inicial do seu celular</p>
+      </div>
+    </div>
+    <button onclick="instalarApp()" class="bg-white text-blue-900 font-bold px-4 py-2.5 rounded-2xl text-xs shadow hover:bg-blue-50 transition shrink-0">
+      Instalar
+    </button>
+  </div>
+
   <!-- Modal Central Moderno para Alertas / Notificações -->
   <div id="modal-aviso-central" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl text-center space-y-4">
@@ -64,7 +78,7 @@
   <div id="drawer-menu" class="fixed top-0 left-0 bottom-0 w-4/5 max-w-xs bg-white z-50 shadow-2xl transform -translate-x-full transition-transform duration-300 flex flex-col">
     <div class="bg-blue-800 text-white p-4 flex justify-between items-center shrink-0">
       <div class="flex items-center space-x-2">
-        <img src="https://cdn-icons-png.flaticon.com/512/3135/3135706.png" class="w-7 h-7">
+        <img src="https://cdn-icons-png.flaticon.com/512/2933/2933116.png" class="w-7 h-7">
         <h2 class="font-bold text-sm">Menu & Configurações</h2>
       </div>
       <button onclick="fecharMenuLateral()" class="text-white font-bold text-xl p-1">✕</button>
@@ -172,7 +186,7 @@
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
         </button>
         <div class="flex items-center space-x-2 truncate">
-          <img src="https://cdn-icons-png.flaticon.com/512/3135/3135706.png" class="w-6 h-6 object-contain shrink-0">
+          <img src="https://cdn-icons-png.flaticon.com/512/2933/2933116.png" class="w-6 h-6 object-contain shrink-0">
           <div class="truncate">
             <h1 class="text-sm font-bold tracking-tight truncate">Finanças Pro</h1>
             <p id="user-role-badge" class="text-xs text-blue-200 truncate">Não conectado</p>
@@ -192,7 +206,7 @@
       <!-- Formulário de Login -->
       <div id="form-login-container">
         <div class="text-center mb-5">
-          <img src="https://cdn-icons-png.flaticon.com/512/3135/3135706.png" class="w-14 h-14 mx-auto mb-2">
+          <img src="https://cdn-icons-png.flaticon.com/512/2933/2933116.png" class="w-14 h-14 mx-auto mb-2">
           <h2 class="text-xl font-bold text-slate-800">Acesse o Sistema</h2>
         </div>
         <form onsubmit="handleLogin(event)" class="space-y-3.5 text-sm">
@@ -296,10 +310,33 @@
     const ADMIN_EMAIL = "giliard@admin.com";
     let currentUser = JSON.parse(localStorage.getItem('pwa_user')) || null;
     let chartInstance = null;
+    let deferredPrompt = null;
     let appData = { receitas: {}, rendasExtras: {}, gastos: [], mensagens: [], usuarios: [], despesasFixas: {} };
     
     const dataAtualObj = new Date();
     let mesSelecionado = `${dataAtualObj.getFullYear()}-${String(dataAtualObj.getMonth() + 1).padStart(2, '0')}`;
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      // Mostra o banner de instalação se não estiver rodando instalado
+      if (!window.matchMedia('(display-mode: standalone)').matches) {
+        document.getElementById('banner-instalacao').classList.remove('hidden');
+      }
+    });
+
+    async function instalarApp() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+          document.getElementById('banner-instalacao').classList.add('hidden');
+        }
+        deferredPrompt = null;
+      } else {
+        mostrarNotificacao("Para instalar, abra o menu do seu navegador (três pontinhos) e selecione 'Adicionar à tela inicial' ou 'Instalar aplicativo'.", "Como Instalar");
+      }
+    }
 
     window.addEventListener('firebase-ready', () => {
       if (currentUser) {
@@ -450,7 +487,6 @@
         document.getElementById('cards-resumo-container').className = "grid grid-cols-2 gap-3";
       } else {
         document.getElementById('drawer-receita-card').classList.remove('hidden');
-        // Usuário comum vê apenas 1 card (Saldo Restante em destaque)
         document.getElementById('card-despesas-box').classList.add('hidden');
         document.getElementById('cards-resumo-container').className = "grid grid-cols-1 gap-3";
       }
@@ -676,7 +712,6 @@
           select.appendChild(opt);
         }
       });
-      // Adiciona o Admin se o usuário atual não for o admin
       if (currentUser.email !== ADMIN_EMAIL) {
         const optAdmin = document.createElement('option');
         optAdmin.value = ADMIN_EMAIL;
@@ -805,9 +840,17 @@
         chartData = [receitaTotal];
         chartColors = ['#10b981'];
       } else {
-        chartLabels = labels;
-        chartData = valores;
-        chartColors = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#64748b'];
+        // Se houver gastos, exibe as despesas e o saldo restante (verde) na rosca
+        chartLabels = [...labels];
+        chartData = [...valores];
+        chartColors = ['#ef4444', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#64748b'];
+
+        const saldoRestante = receitaTotal - totalDespesas;
+        if (saldoRestante > 0) {
+          chartLabels.push('Disponível');
+          chartData.push(saldoRestante);
+          chartColors.push('#10b981');
+        }
       }
 
       if (chartInstance) chartInstance.destroy();
@@ -827,7 +870,18 @@
     }
 
     function initManifest() {
-      const manifestData = { name: "Finanças Pro", short_name: "Finanças", start_url: "./", display: "standalone", background_color: "#ffffff", theme_color: "#1e40af", icons: [{ src: "https://cdn-icons-png.flaticon.com/512/3135/3135706.png", sizes: "192x192", type: "image/png" }] };
+      const manifestData = {
+        name: "Finanças Pro",
+        short_name: "Finanças",
+        start_url: "./",
+        display: "standalone",
+        background_color: "#ffffff",
+        theme_color: "#1e40af",
+        icons: [
+          { src: "https://cdn-icons-png.flaticon.com/512/2933/2933116.png", sizes: "192x192", type: "image/png" },
+          { src: "https://cdn-icons-png.flaticon.com/512/2933/2933116.png", sizes: "512x512", type: "image/png" }
+        ]
+      };
       document.getElementById('manifest-placeholder').setAttribute('href', URL.createObjectURL(new Blob([JSON.stringify(manifestData)], {type: 'application/json'})));
     }
 
