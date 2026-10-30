@@ -234,7 +234,6 @@
     .toast { position: fixed; bottom: 20px; left: 50%; transform: translate(-50%, 20px); opacity: 0; background: #1e293b; border: 1px solid var(--card-border); color: #fff; padding: 10px 16px; border-radius: 8px; font-size: 11px; transition: all 0.25s ease; pointer-events: none; z-index: 2000; }
     .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
-    /* RESPONSIVIDADE TABLET / DESKTOP */
     @media(min-width: 768px) {
       .main { padding: 32px 4% 24px; }
       .summary-grid { grid-template-columns: 1.3fr 1fr 1fr; gap: 16px; }
@@ -598,11 +597,14 @@
     const currentMonth = today().slice(0,7);
 
     function showToast(msg) {
-      const el = $("toast"); el.textContent = msg; el.classList.add("show");
-      setTimeout(() => el.classList.remove("show"), 2800);
+      const el = $("toast"); 
+      if (!el) return;
+      el.textContent = msg; 
+      el.classList.add("show");
+      setTimeout(() => el.classList.remove("show"), 3000);
     }
 
-    // NAVEGAÇÃO
+    // NAVEGAÇÃO DE ABAS
     document.querySelectorAll(".nav-item").forEach(item => {
       item.addEventListener("click", () => {
         document.querySelectorAll(".nav-item").forEach(i => i.classList.remove("active"));
@@ -615,7 +617,7 @@
       });
     });
 
-    // PWA
+    // PWA PROMPT
     window.addEventListener("beforeinstallprompt", (e) => {
       e.preventDefault();
       deferredPrompt = e;
@@ -635,6 +637,7 @@
       }
     });
 
+    // TROCAR ENTRE TELA DE LOGIN E CADASTRO
     $("auth-switch-mode").addEventListener("click", () => {
       isRegisterMode = !isRegisterMode;
       $("auth-title").textContent = isRegisterMode ? "Criar Nova Conta" : "Entrar no Sistema";
@@ -643,54 +646,87 @@
       $("auth-switch-mode").textContent = isRegisterMode ? "Já tem conta? Entrar" : "Não tem conta? Cadastre-se";
     });
 
-    // LOGIN & CADASTRO COM PRIMEIRO USUÁRIO ADMIN AUTOMÁTICO
+    // FLUXO DE AUTENTICAÇÃO (LOGIN / CADASTRO COM CORREÇÃO DE RESPOSTA DO BOTÃO)
     $("auth-form").addEventListener("submit", async e => {
       e.preventDefault();
       const email = $("auth-email").value.trim().toLowerCase();
       const pass = $("auth-pass").value.trim();
 
+      if (!email || !pass) {
+        showToast("Preencha todos os campos.");
+        return;
+      }
+
+      showToast("Processando...");
+
       try {
         const usersSnapshot = await db.collection("users_status").get();
         const isFirstUser = usersSnapshot.empty;
 
-        const userRef = db.collection("users_status").doc(email.replace(/[.#$[\]]/g, "_"));
+        const docId = email.replace(/[.#$[\]]/g, "_");
+        const userRef = db.collection("users_status").doc(docId);
         const docSnap = await userRef.get();
 
         if (isRegisterMode) {
-          if (docSnap.exists) { showToast("E-mail já cadastrado."); return; }
+          if (docSnap.exists) { 
+            showToast("Este e-mail já está cadastrado."); 
+            return; 
+          }
           await userRef.set({
-            email, pass,
-            approved: isFirstUser ? true : false, // Primeiro usuário já entra aprovado e admin
+            email, 
+            pass,
+            approved: isFirstUser ? true : false, 
             isAdmin: isFirstUser ? true : false,
             lastSeen: Date.now()
           });
-          showToast(isFirstUser ? "Conta Administrador criada com sucesso!" : "Cadastro realizado! Aguarde liberação.");
-          isRegisterMode = false;
-          $("auth-switch-mode").click();
+          
+          if (isFirstUser) {
+            showToast("Conta Admin criada! Entrando...");
+            currentUser = email;
+            isAdmin = true;
+            finishLogin();
+          } else {
+            showToast("Cadastro realizado! Aguarde a liberação.");
+            isRegisterMode = false;
+            $("auth-switch-mode").click();
+          }
           return;
         }
 
-        if (!docSnap.exists) { showToast("Usuário não encontrado. Cadastre-se."); return; }
+        // Login
+        if (!docSnap.exists) { 
+          showToast("Usuário não encontrado. Cadastre-se primeiro."); 
+          return; 
+        }
+
         const data = docSnap.data();
-        if (data.pass !== pass) { showToast("Senha incorreta."); return; }
-        if (!data.approved) { showToast("Aguardando aprovação do administrador."); return; }
+        if (data.pass !== pass) { 
+          showToast("Senha incorreta."); 
+          return; 
+        }
+        if (!data.approved) { 
+          showToast("Acesso pendente de aprovação pelo Administrador."); 
+          return; 
+        }
 
         currentUser = email;
         isAdmin = data.isAdmin || false;
-        
-        $("auth-screen").style.display = "none";
-        $("chat-widget").style.display = "block";
-        $("sidebar-user-email").textContent = currentUser;
-        
-        if (isAdmin) $("admin-section").style.display = "block";
+        finishLogin();
 
-        initAppListeners();
-        showToast("Bem-vindo!");
       } catch (err) {
-        console.error(err);
-        showToast("Erro de conexão com Firebase.");
+        console.error("Erro no Firebase:", err);
+        showToast("Erro de conexão com o Firebase.");
       }
     });
+
+    function finishLogin() {
+      $("auth-screen").style.display = "none";
+      $("chat-widget").style.display = "block";
+      $("sidebar-user-email").textContent = currentUser;
+      if (isAdmin) $("admin-section").style.display = "block";
+      initAppListeners();
+      showToast("Bem-vindo ao sistema!");
+    }
 
     $("logout-btn").addEventListener("click", () => location.reload());
 
@@ -729,6 +765,7 @@
           if (d.email !== currentUser && (now - (d.lastSeen || 0)) < 20000) peerOnline = true;
         });
         const dot = $("peer-status-dot");
+        if (!dot) return;
         if (peerOnline) { dot.classList.add("online"); $("chat-title").textContent = "Chat (Online)"; }
         else { dot.classList.remove("online"); $("chat-title").textContent = "Chat (Offline)"; }
       });
@@ -736,6 +773,7 @@
 
     function renderPendingUsers(docs) {
       const container = $("pending-users-list");
+      if (!container) return;
       const users = docs.map(d => ({ id: d.id, ...d.data() }));
       if (!users.length) { container.innerHTML = '<small style="color: var(--text-muted);">Nenhum usuário.</small>'; return; }
 
@@ -782,6 +820,7 @@
 
     function renderMessages(msgs) {
       const c = $("chat-messages-container");
+      if (!c) return;
       c.innerHTML = msgs.map(m => `
         <div class="chat-msg ${m.sender === currentUser ? 'sent' : 'received'}">
           ${m.sender !== currentUser ? `<div style="font-size:8px; font-weight:700; margin-bottom:2px; color:var(--accent);">${m.sender}</div>` : ''}
