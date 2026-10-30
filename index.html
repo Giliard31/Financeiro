@@ -5,7 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#090d16">
   <meta name="description" content="Seu controle financeiro simples, moderno e organizado.">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Meu Controle">
   <title>Meu Controle Financeiro</title>
+
+  <!-- PWA Web Manifest Embutido -->
+  <link rel="manifest" href='data:application/manifest+json,{"name":"Meu Controle Financeiro","short_name":"MeuControle","start_url":".","display":"standalone","background_color":"#090d16","theme_color":"#090d16","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/2953/2953363.png","sizes":"512x512","type":"image/png"}]}'>
 
   <style>
     @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap');
@@ -122,7 +128,7 @@
     .cloud-status small { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
     .version { color: var(--text-muted); font-size: 10px; padding-left: 5px; }
 
-    /* MOBILE TOGGLE */
+    /* MOBILE HEADER */
     .mobile-header {
       display: none;
       background: var(--navy);
@@ -143,6 +149,46 @@
       border-radius: 8px;
       cursor: pointer;
       font-size: 18px;
+    }
+
+    /* PWA INSTALL BANNER */
+    .pwa-banner {
+      background: linear-gradient(135deg, #312e81, #1e1b4b);
+      border: 1px solid #4338ca;
+      border-radius: 14px;
+      padding: 14px 18px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+      animation: fadeIn 0.4s ease;
+    }
+
+    .pwa-banner-text b { display: block; font-size: 13px; color: #fff; }
+    .pwa-banner-text small { font-size: 11px; color: #c7d2fe; }
+    .pwa-actions { display: flex; gap: 8px; align-items: center; }
+    
+    .btn-install {
+      background: #6366f1;
+      color: #fff;
+      border: 0;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 11px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .btn-dismiss {
+      background: transparent;
+      border: 0;
+      color: #a5b4fc;
+      font-size: 18px;
+      cursor: pointer;
+      padding: 4px 8px;
     }
 
     /* MAIN CONTENT */
@@ -269,7 +315,7 @@
     /* CONTENT GRID */
     .content-grid {
       display: grid;
-      grid-template-columns: 1.15fr 1fr;
+      grid-template-columns: 1.25fr 1fr;
       gap: 16px;
     }
 
@@ -295,7 +341,7 @@
       font-weight: 700;
     }
 
-    .chart-wrap { height: 175px; max-width: 240px; margin: 15px auto 5px; position: relative; }
+    .chart-wrap { height: 230px; width: 100%; margin: 15px auto 5px; position: relative; }
     .chart-center {
       position: absolute;
       inset: 0;
@@ -306,7 +352,7 @@
       pointer-events: none;
     }
 
-    .chart-center strong { font: 800 17px 'Manrope', sans-serif; }
+    .chart-center strong { font: 800 16px 'Manrope', sans-serif; color: var(--text-main); }
     .chart-center small { font-size: 9px; letter-spacing: 1px; color: var(--text-muted); margin-top: 2px; }
 
     .legend { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; margin-top: 15px; }
@@ -493,6 +539,11 @@
 
     .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
     /* MEDIA QUERIES */
     @media (max-width: 1024px) {
       .sidebar { width: 210px; }
@@ -511,7 +562,9 @@
     }
   </style>
 
+  <!-- Chart.js + Plugin DataLabels para nomes/fatias do gráfico -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 </head>
 <body>
   <header class="mobile-header">
@@ -536,11 +589,23 @@
           <span class="status-dot"></span>
           <div><b>Seus dados</b><small id="sync-status">Salvos neste aparelho</small></div>
         </div>
-        <small class="version">MEU CONTROLE • 2.0</small>
+        <small class="version">MEU CONTROLE • 2.1</small>
       </div>
     </aside>
 
     <main class="main" id="inicio">
+      <!-- Banner para instalação no celular (só exibe na 1ª vez) -->
+      <div class="pwa-banner" id="pwa-banner" style="display: none;">
+        <div class="pwa-banner-text">
+          <b>Instalar o aplicativo no celular?</b>
+          <small>Acesse mais rápido direto da sua tela inicial.</small>
+        </div>
+        <div class="pwa-actions">
+          <button class="btn-install" id="install-pwa-btn">Instalar</button>
+          <button class="btn-dismiss" id="dismiss-pwa-btn" title="Agora não">×</button>
+        </div>
+      </div>
+
       <header class="topbar">
         <div>
           <p class="eyebrow" id="today-label">SEU RESUMO FINANCEIRO</p>
@@ -584,8 +649,8 @@
       <section class="content-grid">
         <article class="panel chart-panel">
           <div class="panel-heading">
-            <div><h2>Despesas por categoria</h2><p>Veja onde seu dinheiro está sendo usado.</p></div>
-            <span class="mini-tag">CATEGORIAS</span>
+            <div><h2>Despesas por categoria</h2><p>Veja a divisão proporcional dos seus gastos.</p></div>
+            <span class="mini-tag">DIVISÃO</span>
           </div>
           <div class="chart-wrap">
             <canvas id="expense-chart" aria-label="Gráfico de despesas por categoria"></canvas>
@@ -681,17 +746,53 @@
   <div class="toast" id="toast" role="status"></div>
 
   <script>
-    const STORAGE_KEY = "meu-controle-financeiro-v2";
+    const STORAGE_KEY = "meu-controle-financeiro-v3";
+    const PWA_INSTALLED_KEY = "meu-controle-pwa-prompt-done";
     const COLORS = ["#818cf8","#10b981","#f59e0b","#ef4444","#3b82f6","#a855f7","#14b8a6","#64748b","#f97316","#84cc16"];
     const categories = ["Alimentação","Combustível","Gastos pessoais","Moradia","Saúde","Transporte","Educação","Lazer","Contas","Outros"];
+    
+    // Registra o Plugin DataLabels do Chart.js
+    if (window.ChartDataLabels) {
+      Chart.register(ChartDataLabels);
+    }
+
     let transactions = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
     let chart = null;
+    let deferredPrompt = null;
 
     const $ = id => document.getElementById(id);
     const money = value => new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"}).format(value || 0);
     const today = () => new Date().toISOString().slice(0,10);
     const dateLabel = value => new Date(value+"T12:00:00").toLocaleDateString("pt-BR");
     const currentMonth = today().slice(0,7);
+
+    // Gestão de Instalação PWA (Apenas Primeira Vez)
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      const isDismissedOrInstalled = localStorage.getItem(PWA_INSTALLED_KEY);
+      if (!isDismissedOrInstalled) {
+        $("pwa-banner").style.display = "flex";
+      }
+    });
+
+    $("install-pwa-btn")?.addEventListener("click", async () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === "accepted") {
+          showToast("Obrigado por instalar o aplicativo!");
+        }
+        deferredPrompt = null;
+      }
+      localStorage.setItem(PWA_INSTALLED_KEY, "true");
+      $("pwa-banner").style.display = "none";
+    });
+
+    $("dismiss-pwa-btn")?.addEventListener("click", () => {
+      localStorage.setItem(PWA_INSTALLED_KEY, "true");
+      $("pwa-banner").style.display = "none";
+    });
 
     // Sidebar Mobile
     const sidebar = $("sidebar");
@@ -785,10 +886,15 @@
     }
 
     function renderChart(expenses) {
+      // Agrupa os valores corretamente por cada categoria
       const totals = {};
-      expenses.forEach(t => totals[t.category] = (totals[t.category] || 0) + t.amount);
+      expenses.forEach(t => {
+        totals[t.category] = (totals[t.category] || 0) + t.amount;
+      });
+
       const labels = Object.keys(totals);
       const values = Object.values(totals);
+      const grandTotal = values.reduce((a, b) => a + b, 0);
 
       if (chart) chart.destroy();
 
@@ -798,26 +904,55 @@
           labels,
           datasets: [{
             data: values,
-            backgroundColor: labels.map((_, i) => COLORS[categories.indexOf(labels[i]) < 0 ? i : categories.indexOf(labels[i])]),
-            borderWidth: 2,
+            backgroundColor: labels.map((cat, i) => {
+              const idx = categories.indexOf(cat);
+              return COLORS[idx >= 0 ? idx % COLORS.length : i % COLORS.length];
+            }),
+            borderWidth: 3,
             borderColor: "#111827",
-            hoverOffset: 4
+            hoverOffset: 6
           }]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          cutout: "75%",
+          cutout: "68%",
+          layout: {
+            padding: 18
+          },
           plugins: {
             legend: { display: false },
-            tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${money(ctx.raw)}` } }
+            tooltip: {
+              callbacks: {
+                label: ctx => ` ${ctx.label}: ${money(ctx.raw)} (${Math.round((ctx.raw / grandTotal) * 100)}%)`
+              }
+            },
+            // Configuração dos Marcadores Visuais nas fatias
+            datalabels: {
+              color: "#ffffff",
+              font: { weight: "bold", size: 10, family: "DM Sans" },
+              formatter: (val, ctx) => {
+                const pct = Math.round((val / grandTotal) * 100);
+                if (pct < 4) return ""; // oculta em fatias extremamente pequenas para não sobrepor
+                return `${ctx.chart.data.labels[ctx.dataIndex]}\n${pct}%`;
+              },
+              textAlign: "center",
+              anchor: "end",
+              align: "start",
+              offset: 2,
+              borderRadius: 6,
+              backgroundColor: "rgba(15, 23, 42, 0.8)",
+              padding: { top: 3, bottom: 3, left: 6, right: 6 }
+            }
           }
         }
       });
 
-      $("chart-legend").innerHTML = labels.length ? labels.map((label, i) => 
-        `<div class="legend-item"><span class="legend-dot" style="background:${COLORS[categories.indexOf(label)<0?i:categories.indexOf(label)]}"></span><span>${escapeHtml(label)}</span><b>${money(values[i])}</b></div>`
-      ).join("") : '<div class="empty-legend">Suas categorias aparecerão aqui.</div>';
+      $("chart-legend").innerHTML = labels.length ? labels.map((label, i) => {
+        const catIdx = categories.indexOf(label);
+        const color = COLORS[catIdx >= 0 ? catIdx % COLORS.length : i % COLORS.length];
+        return `<div class="legend-item"><span class="legend-dot" style="background:${color}"></span><span>${escapeHtml(label)}</span><b>${money(values[i])}</b></div>`;
+      }).join("") : '<div class="empty-legend">Suas categorias aparecerão aqui.</div>';
     }
 
     function renderCategoryOptions() {
@@ -876,3 +1011,4 @@
   </script>
 </body>
 </html>
+```eof
