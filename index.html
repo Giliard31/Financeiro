@@ -20,12 +20,13 @@
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
     const firebaseConfig = {
-      apiKey: "AIzaSyCz3X_YrYt6o9UATBCiH2Gy_ojcf20Y2GU",
-      authDomain: "controle-finaceiro-7f6d0.firebaseapp.com",
-      projectId: "controle-finaceiro-7f6d0",
-      storageBucket: "controle-finaceiro-7f6d0.firebasestorage.app",
-      messagingSenderId: "171455283903",
-      appId: "1:171455283903:web:77c41302a5b6548dea3c0a"
+      apiKey: "AIzaSyDRD6gZKumzdt5GK0ZOdzqWWIKVn6ufHVE",
+      authDomain: "controle-financeiro-cc95a.firebaseapp.com",
+      projectId: "controle-financeiro-cc95a",
+      storageBucket: "controle-financeiro-cc95a.firebasestorage.app",
+      messagingSenderId: "800648732950",
+      appId: "1:800648732950:web:bbcd127bed6006387a3037",
+      measurementId: "G-QCTKWS1STH"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -821,7 +822,6 @@
         chatEl.scrollTop = chatEl.scrollHeight;
       }
 
-      // Executa o gráfico em segurança para não travar a UI
       try {
         renderChart(receitaTotal, totalDespesas, fixasMes, gastosMes);
       } catch (err) {
