@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <meta name="theme-color" content="#090d16">
-  <meta name="description" content="Controle financeiro seguro com aprovação e chat em tempo real.">
+  <meta name="description" content="Controle financeiro com menu gaveta mobile, gestão admin e chat interativo.">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Meu Controle">
@@ -64,40 +64,62 @@
     .auth-btn:active { background: #10b981 !important; transform: scale(0.98); }
     .auth-switch { text-align: center; font-size: 11px; color: var(--text-muted); margin-top: 14px; cursor: pointer; text-decoration: underline; }
 
-    /* APP SHELL & MOBILE RESPONSIVENESS */
-    .app-shell { min-height: 100vh; display: flex; flex-direction: row; }
-    .sidebar {
-      width: 240px; background: var(--navy); border-right: 1px solid var(--card-border); color: white; position: fixed; inset: 0 auto 0 0; padding: 20px 16px; display: flex; flex-direction: column; z-index: 100; transition: transform 0.3s ease;
+    /* APP SHELL & MOBILE DRAWER MENU */
+    .app-shell { min-height: 100vh; display: flex; flex-direction: column; }
+    
+    /* OVERLAY PARA O MENU GAVETA */
+    #sidebar-overlay {
+      position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(3px); z-index: 150; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
     }
-    .brand { display: flex; align-items: center; gap: 10px; padding: 0 4px 20px; }
+    #sidebar-overlay.active { opacity: 1; pointer-events: auto; }
+
+    /* MENU GAVETA (DRAWER) */
+    .sidebar {
+      width: 270px; background: var(--navy); border-right: 1px solid var(--card-border); color: white; position: fixed; inset: 0 auto 0 0; padding: 20px 16px; display: flex; flex-direction: column; z-index: 200; transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+    }
+    .sidebar.open { transform: translateX(0); }
+
+    .brand { display: flex; align-items: center; justify-content: space-between; padding: 0 4px 20px; border-bottom: 1px solid var(--card-border); margin-bottom: 16px; }
+    .brand-info { display: flex; align-items: center; gap: 10px; }
     .brand-mark {
       width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, #10b981, #059669); color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 16px;
     }
     .brand strong { display: block; font: 800 14px 'Manrope', sans-serif; }
     .brand small { font-size: 8px; letter-spacing: 1.5px; color: var(--text-muted); }
+    .close-drawer-btn { border: 0; background: transparent; color: var(--text-muted); font-size: 20px; cursor: pointer; padding: 4px; }
 
-    .side-label { font-size: 9px; letter-spacing: 1px; color: var(--text-muted); padding: 0 8px 8px; font-weight: 700; }
+    .side-label { font-size: 9px; letter-spacing: 1px; color: var(--text-muted); padding: 0 8px 8px; font-weight: 700; margin-top: 8px; }
     .nav-item {
-      color: var(--text-muted); text-decoration: none; padding: 10px 12px; border-radius: 8px; margin: 2px 0; font-size: 12px; font-weight: 500; display: flex; gap: 8px; align-items: center; cursor: pointer;
+      color: var(--text-muted); text-decoration: none; padding: 12px 14px; border-radius: 10px; margin: 3px 0; font-size: 13px; font-weight: 500; display: flex; gap: 10px; align-items: center; cursor: pointer; transition: all 0.2s;
     }
-    .nav-item:hover { background: rgba(255,255,255,0.05); color: #fff; }
+    .nav-item:hover, .nav-item:active { background: rgba(255,255,255,0.05); color: #fff; }
     .nav-item.active { background: var(--accent); color: #fff; font-weight: 700; }
 
-    .sidebar-bottom { margin-top: auto; border-top: 1px solid var(--card-border); padding-top: 12px; }
-    .user-info { font-size: 10px; color: var(--text-main); font-weight: 700; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .logout-link { font-size: 10px; color: var(--red); cursor: pointer; display: inline-block; margin-top: 4px; }
+    .sidebar-bottom { margin-top: auto; border-top: 1px solid var(--card-border); padding-top: 14px; }
+    .user-info { font-size: 11px; color: var(--text-main); font-weight: 700; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .logout-link { font-size: 11px; color: var(--red); cursor: pointer; display: inline-block; margin-top: 6px; font-weight: 600; }
 
-    .main { margin-left: 240px; padding: 20px 3% 20px; max-width: 1600px; width: 100%; }
-    .topbar { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; flex-wrap: wrap; gap: 10px; }
+    /* CABEÇALHO MOBILE COM BOTÃO 3 BARRINHAS */
+    .mobile-header {
+      background: var(--navy); border-bottom: 1px solid var(--card-border); padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 90;
+    }
+    .menu-hamburger-btn {
+      border: 1px solid var(--card-border); background: var(--card-bg); color: var(--text-main); border-radius: 8px; padding: 8px 12px; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    }
+    .mobile-title { font: 800 15px 'Manrope', sans-serif; display: flex; align-items: center; gap: 8px; }
+
+    /* ÁREA PRINCIPAL */
+    .main { padding: 16px 14px 30px; max-width: 1600px; width: 100%; margin: 0 auto; }
+    .topbar { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
     .eyebrow { font-size: 9px; letter-spacing: 1.5px; font-weight: 800; color: var(--accent); margin: 0 0 4px; }
-    .topbar h1 { font: 800 22px 'Manrope', sans-serif; margin: 0; }
+    .topbar h1 { font: 800 20px 'Manrope', sans-serif; margin: 0; }
     .subheading { color: var(--text-muted); font-size: 11px; margin: 2px 0 0; }
 
     .tab-section { display: none; }
     .tab-section.active { display: block; }
 
-    .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-    .summary-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; padding: 16px; min-height: 105px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+    .summary-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+    .summary-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; padding: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
     .balance-card { background: linear-gradient(135deg, #1e1b4b, #0f172a); border-color: #312e81; }
     .card-top { display: flex; justify-content: space-between; align-items: center; color: var(--text-muted); font-size: 10px; }
     .icon-bubble { width: 26px; height: 26px; border-radius: 8px; background: rgba(255,255,255,0.05); display: grid; place-items: center; font-size: 13px; }
@@ -107,20 +129,20 @@
     .metric { display: block; font: 800 18px 'Manrope', sans-serif; margin: 8px 0 2px; }
     .green-text { color: var(--green); } .red-text { color: var(--red); }
 
-    .entry-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }
+    .entry-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 14px 0; }
     .action-card {
-      border: 1px solid var(--card-border); background: var(--card-bg); border-radius: 12px; padding: 12px 14px; display: flex; align-items: center; gap: 10px; text-align: left; cursor: pointer; color: var(--text-main);
+      border: 1px solid var(--card-border); background: var(--card-bg); border-radius: 12px; padding: 12px 10px; display: flex; align-items: center; gap: 8px; text-align: left; cursor: pointer; color: var(--text-main);
     }
     .action-card.disabled { opacity: 0.4; cursor: not-allowed; }
     .income-action { border-left: 3px solid var(--green); }
     .expense-action { border-left: 3px solid var(--red); }
-    .action-icon { width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; font-size: 16px; font-weight: 700; flex-shrink: 0; }
+    .action-icon { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; font-size: 15px; font-weight: 700; flex-shrink: 0; }
     .income-action .action-icon { background: var(--green-glow); color: var(--green); }
     .expense-action .action-icon { background: var(--red-glow); color: var(--red); }
-    .action-card b { display: block; font-size: 12px; }
-    .action-card small { display: block; font-size: 9px; color: var(--text-muted); margin-top: 1px; }
+    .action-card b { display: block; font-size: 11px; }
+    .action-card small { display: block; font-size: 8px; color: var(--text-muted); margin-top: 1px; }
 
-    .content-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px; }
+    .content-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
     .panel { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; padding: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
     .panel-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
     .panel-heading h2 { font: 800 13px 'Manrope', sans-serif; margin: 0; }
@@ -161,11 +183,11 @@
     }
 
     .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    table { width: 100%; border-collapse: collapse; min-width: 580px; }
+    table { width: 100%; border-collapse: collapse; min-width: 500px; }
     th { text-align: left; font-size: 8px; letter-spacing: 1px; color: var(--text-muted); font-weight: 700; padding: 10px 8px; border-bottom: 1px solid var(--card-border); }
     td { padding: 11px 8px; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 11px; color: var(--text-muted); }
     .description-cell { font-weight: 600; color: var(--text-main); }
-    .type-icon { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 6px; margin-right: 6px; font-weight: 700; font-size: 10px; }
+    .type-icon { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 6px; margin-right: 6px; font-weight: 700; font-size: 10px; }
     .type-icon.expense { background: var(--red-glow); color: var(--red); }
     .type-icon.income { background: var(--green-glow); color: var(--green); }
     .category-pill { background: rgba(255,255,255,0.05); padding: 3px 6px; border-radius: 5px; font-size: 9px; color: var(--text-main); }
@@ -177,14 +199,14 @@
     .status-btn { color: var(--text-muted); font-size: 13px; }
     .delete-btn { color: var(--text-muted); font-size: 14px; }
 
-    /* ADMIN PANEL */
+    /* ADMIN PANEL DENTRO DA GAVETA/MODAL */
     .admin-panel { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; padding: 16px; margin-bottom: 16px; }
     .user-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 11px; flex-wrap: wrap; gap: 8px; }
-    .user-controls { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .user-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
     .user-controls label { display: flex; align-items: center; gap: 4px; cursor: pointer; font-size: 10px; }
     .checkbox-liberar, .checkbox-admin { width: 15px; height: 15px; cursor: pointer; }
 
-    /* COMPARATIVO & POUPANÇA MOBILE */
+    /* COMPARATIVO & POUPANÇA */
     .compare-cards { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 16px; }
     .compare-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; padding: 14px; }
     .compare-card small { display: block; font-size: 9px; color: var(--text-muted); margin-bottom: 4px; }
@@ -196,24 +218,35 @@
     .savings-card small { color: #d8b4fe; font-size: 10px; }
     .savings-card strong { font: 800 22px 'Manrope', sans-serif; color: #fff; margin: 6px 0; display: block; }
 
-    /* CHAT WIDGET */
+    /* CHAT WIDGET COM BOTÃO DE EXCLUIR MENSAGEM */
     #chat-widget { position: fixed; bottom: 16px; right: 16px; z-index: 1000; }
     #chat-toggle-btn {
-      background: var(--accent); color: #fff; border: 0; width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; font-size: 18px; cursor: pointer; box-shadow: 0 4px 15px rgba(99,102,241,0.4); position: relative;
+      background: var(--accent); color: #fff; border: 0; width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; font-size: 20px; cursor: pointer; box-shadow: 0 4px 15px rgba(99,102,241,0.4); position: relative;
     }
-    .chat-badge { position: absolute; top: -2px; right: -2px; background: var(--red); color: #fff; font-size: 9px; font-weight: 800; width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; border: 2px solid var(--bg); }
-    .online-indicator { width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); display: inline-block; margin-right: 4px; }
-    .online-indicator.online { background: var(--green); box-shadow: 0 0 5px var(--green); }
+    .chat-badge { position: absolute; top: -3px; right: -3px; background: var(--red); color: #fff; font-size: 10px; font-weight: 800; width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; border: 2px solid var(--bg); box-shadow: 0 2px 6px rgba(0,0,0,0.5); }
+    .online-indicator { width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); display: inline-block; margin-right: 6px; }
+    .online-indicator.online { background: var(--green); box-shadow: 0 0 6px var(--green); }
 
     #chat-box {
-      position: absolute; bottom: 55px; right: 0; width: min(320px, calc(100vw - 32px)); height: 380px; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; display: flex; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.5); overflow: hidden; display: none;
+      position: absolute; bottom: 58px; right: 0; width: min(320px, calc(100vw - 32px)); height: 380px; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; display: flex; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.5); overflow: hidden; display: none;
     }
     .chat-header { background: var(--navy); padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--card-border); }
-    .chat-header h4 { margin: 0; font-size: 12px; font-weight: 700; display: flex; align-items: center; }
+    .chat-header h4 { margin: 0; font-size: 11px; font-weight: 700; display: flex; align-items: center; }
     .chat-messages { flex: 1; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; font-size: 11px; }
-    .chat-msg { max-width: 80%; padding: 8px 10px; border-radius: 8px; line-height: 1.3; word-break: break-word; }
-    .chat-msg.sent { background: var(--accent); color: #fff; align-self: flex-end; }
-    .chat-msg.received { background: var(--navy); color: var(--text-main); align-self: flex-start; border: 1px solid var(--card-border); }
+    
+    /* MENSAGEM DO CHAT LEVE E COM BOTAO DE DELETAR */
+    .chat-msg-row { display: flex; align-items: center; gap: 6px; width: 100%; }
+    .chat-msg-row.sent { justify-content: flex-end; }
+    .chat-msg-row.received { justify-content: flex-start; }
+    
+    .chat-msg { max-width: 80%; padding: 8px 10px; border-radius: 10px; line-height: 1.3; word-break: break-word; font-size: 11px; position: relative; }
+    .chat-msg-row.sent .chat-msg { background: var(--accent); color: #fff; border-bottom-right-radius: 2px; }
+    .chat-msg-row.received .chat-msg { background: var(--navy); color: var(--text-main); border-bottom-left-radius: 2px; border: 1px solid var(--card-border); }
+    
+    .chat-msg-sender { font-size: 8px; font-weight: 700; color: var(--green); margin-bottom: 2px; }
+    .msg-del-btn { border: 0; background: transparent; color: var(--text-muted); cursor: pointer; font-size: 12px; padding: 2px 4px; opacity: 0.7; }
+    .msg-del-btn:hover { color: var(--red); opacity: 1; }
+
     .chat-input-area { padding: 8px; background: var(--navy); border-top: 1px solid var(--card-border); display: flex; gap: 6px; }
     .chat-input-area input { flex: 1; border: 1px solid var(--card-border); border-radius: 6px; padding: 8px; font-size: 11px; background: var(--card-bg); color: var(--text-main); outline: none; }
     .chat-send-btn { background: var(--accent); color: #fff; border: 0; padding: 0 12px; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 11px; }
@@ -238,19 +271,14 @@
     .toast { position: fixed; bottom: 20px; left: 50%; transform: translate(-50%, 20px); opacity: 0; background: #1e293b; border: 1px solid var(--card-border); color: #fff; padding: 12px 20px; border-radius: 8px; font-size: 12px; transition: all 0.25s ease; pointer-events: none; z-index: 2000; box-shadow: 0 10px 25px rgba(0,0,0,0.4); }
     .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
+    /* ADAPTAÇÃO TABLET / DESKTOP */
     @media(min-width: 768px) {
-      .main { padding: 32px 4% 24px; }
       .summary-grid { grid-template-columns: 1.3fr 1fr 1fr; gap: 16px; }
-      .summary-card { padding: 20px; min-height: 120px; }
-      .big-value { font-size: 26px; }
-      .metric { font-size: 22px; }
       .content-grid { grid-template-columns: 1.25fr 1fr; gap: 16px; }
       .compare-cards { grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
       .savings-grid { grid-template-columns: 1fr 1fr; gap: 16px; }
       .history-tools { width: auto; }
       .history-tools select { width: auto; }
-      dialog { width: min(420px, calc(100% - 32px)); }
-      dialog form { padding: 26px; }
     }
   </style>
 </head>
@@ -273,21 +301,39 @@
   </div>
 
   <div class="app-shell">
-    <aside class="sidebar">
+    
+    <!-- MÁSCARA ESCURA PARA FECHAR A GAVETA -->
+    <div id="sidebar-overlay"></div>
+
+    <!-- MENU GAVETA (DRAWER ESQUERDA) -->
+    <aside class="sidebar" id="sidebar">
       <div class="brand">
-        <div class="brand-mark">R$</div>
-        <div><strong>Meu Controle</strong><small>FINANCEIRO</small></div>
+        <div class="brand-info">
+          <div class="brand-mark">R$</div>
+          <div><strong>Meu Controle</strong><small>FINANCEIRO</small></div>
+        </div>
+        <button class="close-drawer-btn" id="close-drawer-btn">×</button>
       </div>
-      <div class="side-label">MENU</div>
+
+      <div class="side-label">NAVEGAÇÃO PRINCIPAL</div>
       <a class="nav-item active" data-tab="tab-overview"><span>▦</span> Visão geral</a>
       <a class="nav-item" data-tab="tab-compare"><span>📊</span> Comparativo</a>
       <a class="nav-item" data-tab="tab-savings"><span>🐷</span> Poupança</a>
       <a class="nav-item" data-tab="tab-history"><span>↕</span> Lançamentos</a>
+      <a class="nav-item" data-tab="tab-admin" id="nav-admin-item" style="display: none; color: var(--accent);"><span>👑</span> Permissões Admin</a>
+
       <div class="sidebar-bottom">
         <span class="user-info" id="sidebar-user-email">Carregando...</span>
-        <span class="logout-link" id="logout-btn">Sair</span>
+        <span class="logout-link" id="logout-btn">Sair da Conta</span>
       </div>
     </aside>
+
+    <!-- CABEÇALHO FIXO MOBILE COM BOTÃO 3 BARRINHAS -->
+    <header class="mobile-header">
+      <button class="menu-hamburger-btn" id="open-drawer-btn" title="Abrir Menu">☰</button>
+      <div class="mobile-title"><span style="color:var(--green); font-weight:800;">R$</span> Meu Controle</div>
+      <div style="width: 38px;"></div> <!-- Espaçador para centralizar -->
+    </header>
 
     <main class="main">
       <!-- BANNER PWA -->
@@ -312,34 +358,21 @@
           <button class="month-chip" id="month-filter" type="button" style="border:1px solid var(--card-border); background:var(--card-bg); border-radius:8px; padding:8px 12px; color:var(--text-main); font-weight:600; font-size:10px;">▣ <span id="month-name">Este mês</span></button>
         </header>
 
-        <!-- PAINEL ADMIN -->
-        <div id="admin-section" style="display: none;">
-          <div class="panel admin-panel">
-            <div class="panel-heading">
-              <div><h2>Aprovação & Permissões</h2><p>Gerencie acessos e perfis de administrador.</p></div>
-              <span class="mini-tag">ADMIN</span>
-            </div>
-            <div id="pending-users-list" style="margin-top: 12px;">
-              <small style="color: var(--text-muted);">Nenhum usuário pendente.</small>
-            </div>
-          </div>
-        </div>
-
         <section class="summary-grid">
           <article class="summary-card balance-card">
-            <div class="card-top"><span>Saldo</span><span class="icon-bubble">◈</span></div>
+            <div class="card-top"><span>Saldo do Período</span><span class="icon-bubble">◈</span></div>
             <strong class="big-value" id="balance">R$ 0,00</strong>
             <small>Entradas - Saídas</small>
           </article>
           <article class="summary-card">
             <div class="card-top"><span>Receitas</span><span class="icon-bubble green">↗</span></div>
             <strong class="metric green-text" id="income-total">R$ 0,00</strong>
-            <small>Entradas</small>
+            <small>Entradas do mês</small>
           </article>
           <article class="summary-card">
             <div class="card-top"><span>Despesas</span><span class="icon-bubble red">↘</span></div>
             <strong class="metric red-text" id="expense-total">R$ 0,00</strong>
-            <small>Saídas</small>
+            <small>Saídas do mês</small>
           </article>
         </section>
 
@@ -357,7 +390,7 @@
         <section class="content-grid">
           <article class="panel chart-panel">
             <div class="panel-heading">
-              <div><h2>Despesas por categoria</h2><p>Gastos do mês atual.</p></div>
+              <div><h2>Despesas por Categoria</h2><p>Gastos do mês atual.</p></div>
               <span class="mini-tag">DIVISÃO</span>
             </div>
             <div class="chart-wrap">
@@ -369,7 +402,7 @@
 
           <article class="panel payment-panel">
             <div class="panel-heading">
-              <div><h2>Situação das despesas</h2><p>Pago e pendente.</p></div>
+              <div><h2>Situação das Despesas</h2><p>Pago e pendente.</p></div>
               <span class="mini-tag">RESUMO</span>
             </div>
             <div class="payment-summary">
@@ -387,7 +420,7 @@
       <div class="tab-section" id="tab-compare">
         <header class="topbar">
           <div>
-            <p class="eyebrow">ANÁLISE</p>
+            <p class="eyebrow">ANÁLISE DE DESEMPENHO</p>
             <h1>Comparativo de Meses</h1>
             <p class="subheading">Comportamento dos seus gastos.</p>
           </div>
@@ -404,7 +437,7 @@
             <strong id="comp-prev-expense">R$ 0,00</strong>
           </div>
           <div class="compare-card">
-            <small>Maior Categoria</small>
+            <small>Maior Categoria de Gasto</small>
             <strong id="comp-top-cat">-</strong>
             <small id="comp-top-cat-val">R$ 0,00</small>
           </div>
@@ -412,10 +445,10 @@
 
         <article class="panel">
           <div class="panel-heading">
-            <div><h2>Evolução Mensal</h2><p>Receitas x Despesas.</p></div>
+            <div><h2>Evolução Mensal (Entradas x Saídas)</h2><p>Gráfico de barras verticais.</p></div>
             <span class="mini-tag">BARRAS</span>
           </div>
-          <div style="height: 220px; margin-top: 12px;">
+          <div style="height: 240px; margin-top: 12px;">
             <canvas id="bar-chart-compare"></canvas>
           </div>
         </article>
@@ -425,9 +458,9 @@
       <div class="tab-section" id="tab-savings">
         <header class="topbar">
           <div>
-            <p class="eyebrow">RESERVA</p>
+            <p class="eyebrow">RESERVA & INVESTIMENTOS</p>
             <h1>Sua Poupança</h1>
-            <p class="subheading">Acompanhe seus aportes.</p>
+            <p class="subheading">Acompanhe seus aportes e saques.</p>
           </div>
           <button class="submit-btn" id="open-savings-modal" style="margin:0; width:auto; padding:8px 12px; font-size:10px;">+ Operação</button>
         </header>
@@ -453,7 +486,7 @@
           <div class="table-wrap" style="margin-top: 10px;">
             <table>
               <thead>
-                <tr><th>TIPO</th><th>DATA</th><th>VALOR</th><th>POR</th></tr>
+                <tr><th>TIPO</th><th>DATA</th><th>VALOR</th><th>REGISTRADO POR</th></tr>
               </thead>
               <tbody id="savings-list">
                 <tr><td colspan="4" style="text-align:center; padding:15px;">Nenhum registro.</td></tr>
@@ -467,15 +500,15 @@
       <div class="tab-section" id="tab-history">
         <header class="topbar">
           <div>
-            <p class="eyebrow">HISTÓRICO</p>
+            <p class="eyebrow">HISTÓRICO COMPLETO</p>
             <h1>Lançamentos</h1>
-            <p class="subheading">Filtragem completa.</p>
+            <p class="subheading">Filtragem e busca de transações.</p>
           </div>
         </header>
 
         <section class="panel history-panel" style="margin-top:0;">
           <div class="panel-heading history-heading">
-            <div><h2>Transações</h2></div>
+            <div><h2>Transações Registradas</h2></div>
             <div class="history-tools">
               <select id="type-filter"><option value="all">Todos</option><option value="expense">Despesas</option><option value="income">Receitas</option></select>
               <select id="category-filter"><option value="all">Categorias</option></select>
@@ -487,28 +520,44 @@
                 <tr><th>DESCRIÇÃO</th><th>CAT.</th><th>DATA</th><th>VALOR</th><th>SITUAÇÃO</th><th></th></tr>
               </thead>
               <tbody id="transaction-list">
-                <tr><td colspan="6" class="empty-state" style="text-align:center; padding:20px;"><span>✦</span><b>Nenhum lançamento</b></td></tr>
+                <tr><td colspan="6" class="empty-state" style="text-align:center; padding:20px;"><span>✦</span><b>Nenhum lançamento encontrado</b></td></tr>
               </tbody>
             </table>
           </div>
         </section>
       </div>
 
+      <!-- ABA 5: ADMIN / APROVAÇÃO (ACCESSÍVEL PELO MENU GAVETA) -->
+      <div class="tab-section" id="tab-admin">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">PAINEL DE CONTROLADORIA</p>
+            <h1>Aprovação & Permissões</h1>
+            <p class="subheading">Gerencie os acessos do aplicativo.</p>
+          </div>
+        </header>
+        <div class="panel admin-panel">
+          <div id="pending-users-list">
+            <small style="color: var(--text-muted);">Nenhum usuário cadastrado.</small>
+          </div>
+        </div>
+      </div>
+
       <footer><div style="font-size:9px; color:var(--text-muted); text-align:center; margin-top:20px;">Meu Controle Financeiro • Firebase</div></footer>
     </main>
   </div>
 
-  <!-- CHAT WIDGET -->
+  <!-- CHAT WIDGET FLUTUANTE COM DELEÇÃO DE MENSAGENS -->
   <div id="chat-widget" style="display: none;">
     <button id="chat-toggle-btn" title="Chat">💬<span class="chat-badge" id="chat-badge" style="display: none;">0</span></button>
     <div id="chat-box">
       <div class="chat-header">
-        <h4><span class="online-indicator" id="peer-status-dot"></span><span id="chat-title">Chat Interno</span></h4>
+        <h4><span class="online-indicator" id="peer-status-dot"></span><span id="chat-title">Chat</span></h4>
         <button class="close-btn" id="close-chat-btn" style="width:22px;height:22px;font-size:12px;">×</button>
       </div>
       <div class="chat-messages" id="chat-messages-container"></div>
       <form class="chat-input-area" id="chat-form">
-        <input id="chat-input" type="text" placeholder="Mensagem..." autocomplete="off" required>
+        <input id="chat-input" type="text" placeholder="Escreva uma mensagem..." autocomplete="off" required>
         <button class="chat-send-btn" type="submit">Enviar</button>
       </form>
     </div>
@@ -518,11 +567,11 @@
   <dialog id="entry-dialog">
     <form id="entry-form" method="dialog">
       <div class="dialog-top">
-        <div><span style="font-size:8px; letter-spacing:1px; font-weight:800; color:var(--accent);">NOVO</span><h2 id="dialog-title">Adicionar</h2></div>
+        <div><span style="font-size:8px; letter-spacing:1px; font-weight:800; color:var(--accent);">NOVO LANÇAMENTO</span><h2 id="dialog-title">Adicionar</h2></div>
         <button class="close-btn" type="button" id="close-dialog">×</button>
       </div>
       <input type="hidden" id="entry-type" value="expense">
-      <label>Nome</label>
+      <label>Nome do lançamento</label>
       <input id="entry-name" type="text" placeholder="Ex.: Mercado" maxlength="60" required>
       <label>Valor (R$)</label>
       <div class="amount-input"><span>R$</span><input id="entry-amount" type="number" min="0.01" step="0.01" placeholder="0,00" required></div>
@@ -548,7 +597,7 @@
   <dialog id="savings-dialog">
     <form id="savings-form" method="dialog">
       <div class="dialog-top">
-        <div><span style="font-size:8px; letter-spacing:1px; font-weight:800; color:var(--purple);">RESERVA</span><h2>Poupança</h2></div>
+        <div><span style="font-size:8px; letter-spacing:1px; font-weight:800; color:var(--purple);">POUPANÇA</span><h2>Operação</h2></div>
         <button class="close-btn" type="button" id="close-savings-dialog">×</button>
       </div>
       <label>Operação</label>
@@ -594,6 +643,7 @@
     let unreadCount = 0;
     let chatOpen = false;
     let deferredPrompt = null;
+    let messagesList = [];
 
     const $ = id => document.getElementById(id);
     const money = value => new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"}).format(value || 0);
@@ -608,16 +658,34 @@
       setTimeout(() => el.classList.remove("show"), 3500);
     }
 
-    // NAVEGAÇÃO DE ABAS
+    // CONTROLE DA GAVETA (DRAWER MOBILE)
+    function openDrawer() {
+      $("sidebar").classList.add("open");
+      $("sidebar-overlay").classList.add("active");
+    }
+    function closeDrawer() {
+      $("sidebar").classList.remove("open");
+      $("sidebar-overlay").classList.remove("active");
+    }
+
+    $("open-drawer-btn").addEventListener("click", openDrawer);
+    $("close-drawer-btn").addEventListener("click", closeDrawer);
+    $("sidebar-overlay").addEventListener("click", closeDrawer);
+
+    // NAVEGAÇÃO DE ABAS VIA GAVETA
     document.querySelectorAll(".nav-item").forEach(item => {
       item.addEventListener("click", () => {
         document.querySelectorAll(".nav-item").forEach(i => i.classList.remove("active"));
         document.querySelectorAll(".tab-section").forEach(s => s.classList.remove("active"));
         item.classList.add("active");
+        
         const tabId = item.dataset.tab;
         if ($(tabId)) $(tabId).classList.add("active");
+        
         if (tabId === "tab-compare") renderComparison();
         if (tabId === "tab-savings") renderSavings();
+        
+        closeDrawer(); // Fecha o menu gaveta ao selecionar
       });
     });
 
@@ -650,7 +718,7 @@
       $("auth-switch-mode").textContent = isRegisterMode ? "Já tem conta? Entrar" : "Não tem conta? Cadastre-se";
     });
 
-    // FLUXO DE AUTENTICAÇÃO (LOGIN / CADASTRO COM MENSAGENS CLARAS)
+    // FLUXO DE AUTENTICAÇÃO
     $("auth-form").addEventListener("submit", async e => {
       e.preventDefault();
       const email = $("auth-email").value.trim().toLowerCase();
@@ -662,7 +730,6 @@
         return;
       }
 
-      // Feedback visual no botão
       submitBtn.textContent = "Processando...";
       submitBtn.style.background = "#10b981";
 
@@ -690,12 +757,12 @@
           });
           
           if (isFirstUser) {
-            showToast("Primeiro acesso! Conta Admin criada com sucesso.");
+            showToast("Primeiro acesso! Conta Admin criada.");
             currentUser = email;
             isAdmin = true;
             finishLogin();
           } else {
-            showToast("Cadastro realizado com sucesso! Aguarde a liberação do administrador.");
+            showToast("Cadastro realizado! Aguarde liberação do Administrador.");
             isRegisterMode = false;
             $("auth-switch-mode").click();
             resetBtn(submitBtn);
@@ -703,9 +770,8 @@
           return;
         }
 
-        // Fluxo de Login
         if (!docSnap.exists) { 
-          showToast("Este e-mail não está cadastrado. Faça o cadastro primeiro!"); 
+          showToast("E-mail não cadastrado. Faça o cadastro primeiro!"); 
           resetBtn(submitBtn);
           return; 
         }
@@ -724,11 +790,11 @@
 
         currentUser = email;
         isAdmin = data.isAdmin || false;
-        showToast("Login efetuado com sucesso!");
+        showToast("Login efetuado!");
         finishLogin();
 
       } catch (err) {
-        console.error("Erro no Firebase:", err);
+        console.error(err);
         showToast("Erro de conexão. Verifique sua internet.");
         resetBtn(submitBtn);
       }
@@ -743,7 +809,11 @@
       $("auth-screen").style.display = "none";
       $("chat-widget").style.display = "block";
       $("sidebar-user-email").textContent = currentUser;
-      if (isAdmin) $("admin-section").style.display = "block";
+      
+      if (isAdmin) {
+        $("nav-admin-item").style.display = "flex";
+      }
+
       initAppListeners();
     }
 
@@ -772,21 +842,42 @@
         });
       }
 
+      // OUVINTE DO CHAT COM NOTIFICAÇÃO 1, 2...
       db.collection("messages").orderBy("createdAt", "asc").onSnapshot(snapshot => {
-        renderMessages(snapshot.docs.map(doc => doc.data()));
+        const oldLen = messagesList.length;
+        messagesList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderMessages(messagesList);
+
+        if (!chatOpen && messagesList.length > oldLen) {
+          const newMsgs = messagesList.filter(m => m.sender !== currentUser);
+          if (newMsgs.length) {
+            unreadCount = newMsgs.length;
+            $("chat-badge").textContent = unreadCount;
+            $("chat-badge").style.display = "grid";
+          }
+        }
       });
 
       db.collection("users_status").onSnapshot(snapshot => {
         let peerOnline = false;
+        let onlineName = "";
         const now = Date.now();
         snapshot.docs.forEach(doc => {
           const d = doc.data();
-          if (d.email !== currentUser && (now - (d.lastSeen || 0)) < 20000) peerOnline = true;
+          if (d.email !== currentUser && (now - (d.lastSeen || 0)) < 25000) {
+            peerOnline = true;
+            onlineName = d.email.split("@")[0];
+          }
         });
         const dot = $("peer-status-dot");
         if (!dot) return;
-        if (peerOnline) { dot.classList.add("online"); $("chat-title").textContent = "Chat (Online)"; }
-        else { dot.classList.remove("online"); $("chat-title").textContent = "Chat (Offline)"; }
+        if (peerOnline) { 
+          dot.classList.add("online"); 
+          $("chat-title").textContent = `Chat (${onlineName} online)`; 
+        } else { 
+          dot.classList.remove("online"); 
+          $("chat-title").textContent = "Chat Interno"; 
+        }
       });
     }
 
@@ -809,7 +900,7 @@
       container.querySelectorAll(".checkbox-liberar").forEach(chk => {
         chk.addEventListener("change", async e => {
           await db.collection("users_status").doc(e.target.dataset.id).update({ approved: e.target.checked });
-          showToast(e.target.checked ? "Liberado!" : "Bloqueado.");
+          showToast(e.target.checked ? "Acesso liberado!" : "Acesso bloqueado.");
         });
       });
 
@@ -821,11 +912,16 @@
       });
     }
 
-    // CHAT
+    // CHAT WIDGET
     $("chat-toggle-btn").addEventListener("click", () => {
       chatOpen = !chatOpen;
       $("chat-box").style.display = chatOpen ? "flex" : "none";
-      if (chatOpen) { unreadCount = 0; $("chat-badge").style.display = "none"; }
+      if (chatOpen) { 
+        unreadCount = 0; 
+        $("chat-badge").style.display = "none";
+        const c = $("chat-messages-container");
+        c.scrollTop = c.scrollHeight;
+      }
     });
     $("close-chat-btn").addEventListener("click", () => { chatOpen = false; $("chat-box").style.display = "none"; });
 
@@ -837,24 +933,36 @@
       await db.collection("messages").add({ sender: currentUser, text, createdAt: Date.now() });
     });
 
+    // RENDERIZAR CHAT COM NOME COMPACTO E BOTÃO EXCLUIR MENSAGEM
     function renderMessages(msgs) {
       const c = $("chat-messages-container");
       if (!c) return;
-      c.innerHTML = msgs.map(m => `
-        <div class="chat-msg ${m.sender === currentUser ? 'sent' : 'received'}">
-          ${m.sender !== currentUser ? `<div style="font-size:8px; font-weight:700; margin-bottom:2px; color:var(--accent);">${m.sender}</div>` : ''}
-          ${escapeHtml(m.text)}
-        </div>
-      `).join("");
+      
+      c.innerHTML = msgs.map(m => {
+        const isMe = m.sender === currentUser;
+        const senderLabel = isMe ? "" : `<div class="chat-msg-sender">${m.sender.split("@")[0]}</div>`;
+        return `
+          <div class="chat-msg-row ${isMe ? 'sent' : 'received'}">
+            <div class="chat-msg">
+              ${senderLabel}
+              ${escapeHtml(m.text)}
+            </div>
+            <button class="msg-del-btn" data-msg-id="${m.id}" title="Apagar mensagem">×</button>
+          </div>
+        `;
+      }).join("");
+
       c.scrollTop = c.scrollHeight;
-      if (!chatOpen && msgs.length && msgs[msgs.length - 1].sender !== currentUser) {
-        unreadCount++;
-        $("chat-badge").textContent = unreadCount;
-        $("chat-badge").style.display = "grid";
-      }
+
+      // Evento de apagar mensagem
+      c.querySelectorAll("[data-msg-id]").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          await db.collection("messages").doc(btn.dataset.msgId).delete();
+        });
+      });
     }
 
-    // PERMISSÕES
+    // PERMISSÕES DE LANÇAMENTO
     function checkPermissions() {
       const openIncomeBtn = $("open-income");
       const openExpenseBtn = $("open-expense");
@@ -938,7 +1046,7 @@
           <td><b style="color:${r.type === 'deposit' ? 'var(--green)' : 'var(--red)'}">${r.type === 'deposit' ? 'Depósito' : 'Retirada'}</b></td>
           <td>${new Date(r.date+"T12:00:00").toLocaleDateString("pt-BR")}</td>
           <td><b>${money(r.amount)}</b></td>
-          <td>${r.createdBy || 'Admin'}</td>
+          <td>${(r.createdBy || 'Admin').split('@')[0]}</td>
         </tr>
       `).join("") : '<tr><td colspan="4" style="text-align:center; padding:15px;">Nenhum registro.</td></tr>';
     }
