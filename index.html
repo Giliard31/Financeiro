@@ -97,7 +97,7 @@
     .user-info { font-size: 11px; color: var(--text-main); font-weight: 700; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .logout-link { font-size: 11px; color: var(--red); cursor: pointer; display: inline-block; margin-top: 6px; font-weight: 600; }
 
-    /* CABEÇALHO MOBILE COM BOTÃO 3 BARRINHAS */
+    /* CABEÇALHO MOBILE */
     .mobile-header {
       background: var(--navy); border-bottom: 1px solid var(--card-border); padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 90;
     }
@@ -117,8 +117,7 @@
     .tab-section.active { display: block; }
 
     .summary-grid { display: grid; grid-template-columns: 1fr; gap: 10px; transition: all 0.3s ease; }
-    .summary-grid.hidden-values .big-value, 
-    .summary-grid.hidden-values .metric { filter: blur(6px); user-select: none; }
+    .summary-grid.hidden-values { display: none !important; }
     
     .summary-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; padding: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
     .balance-card { background: linear-gradient(135deg, #1e1b4b, #0f172a); border-color: #312e81; }
@@ -354,7 +353,7 @@
             <p class="subheading">Acompanhe seu dinheiro com clareza.</p>
           </div>
           <div style="display: flex; gap: 6px; align-items: center;">
-            <button id="toggle-visibility-btn" type="button" style="border:1px solid var(--card-border); background:var(--card-bg); border-radius:8px; padding:8px 10px; color:var(--text-main); font-weight:600; font-size:10px; cursor:pointer;" title="Ocultar/Mostrar Valores">👁️</button>
+            <button id="toggle-visibility-btn" type="button" style="border:1px solid var(--card-border); background:var(--card-bg); border-radius:8px; padding:8px 10px; color:var(--text-main); font-weight:600; font-size:10px; cursor:pointer;" title="Esconder/Mostrar Valores">👁️</button>
             <button class="month-chip" id="month-filter" type="button" style="border:1px solid var(--card-border); background:var(--card-bg); border-radius:8px; padding:8px 12px; color:var(--text-main); font-weight:600; font-size:10px;">▣ <span id="month-name">Este mês</span></button>
           </div>
         </header>
@@ -660,12 +659,12 @@
       setTimeout(() => el.classList.remove("show"), 3500);
     }
 
-    // BOTÃO DE OCULTAR / EXIBIR SALDOS
+    // BOTÃO DE OCULTAR / COLAPSAR OS CARDS DE SALDO
     $("toggle-visibility-btn").addEventListener("click", () => {
       valuesHidden = !valuesHidden;
       $("summary-grid-cards").classList.toggle("hidden-values", valuesHidden);
       $("toggle-visibility-btn").textContent = valuesHidden ? "🔒" : "👁️";
-      showToast(valuesHidden ? "Saldos ocultados." : "Saldos visíveis.");
+      showToast(valuesHidden ? "Cards ocultados. O gráfico subiu." : "Cards visíveis.");
     });
 
     // CONTROLE DA GAVETA
@@ -830,7 +829,6 @@
     function initAppListeners() {
       setInterval(() => {
         if (!currentUser) return;
-        // Atualiza status online e verifica se o admin foi concedido em tempo real
         db.collection("users_status").doc(currentUser.replace(/[.#$[\]]/g, "_")).get().then(doc => {
           if (doc.exists) {
             isAdmin = doc.data().isAdmin || false;
