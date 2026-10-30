@@ -36,6 +36,7 @@
       --red: #ef4444;
       --red-glow: rgba(239, 68, 68, 0.15);
       --accent: #6366f1;
+      --accent-hover: #4f46e5;
       --purple: #8b5cf6;
     }
 
@@ -55,9 +56,12 @@
     .auth-card input {
       width: 100%; border: 1px solid var(--card-border); border-radius: 10px; padding: 12px; font: 500 14px 'DM Sans', sans-serif; color: var(--text-main); background: var(--navy); outline: none;
     }
+    .auth-card input:focus { border-color: var(--accent); }
+    
     .auth-btn {
-      margin-top: 18px; width: 100%; border: 0; border-radius: 10px; background: var(--accent); color: #fff; padding: 12px; font: 700 12px 'DM Sans', sans-serif; cursor: pointer;
+      margin-top: 18px; width: 100%; border: 0; border-radius: 10px; background: var(--accent); color: #fff; padding: 12px; font: 700 12px 'DM Sans', sans-serif; cursor: pointer; transition: background 0.15s ease, transform 0.1s ease;
     }
+    .auth-btn:active { background: #10b981 !important; transform: scale(0.98); }
     .auth-switch { text-align: center; font-size: 11px; color: var(--text-muted); margin-top: 14px; cursor: pointer; text-decoration: underline; }
 
     /* APP SHELL & MOBILE RESPONSIVENESS */
@@ -231,7 +235,7 @@
     .amount-input input { border: 0; background: transparent; }
     .submit-btn { margin-top: 18px; width: 100%; border: 0; border-radius: 8px; background: var(--accent); color: #fff; padding: 12px; font: 700 11px 'DM Sans', sans-serif; cursor: pointer; }
 
-    .toast { position: fixed; bottom: 20px; left: 50%; transform: translate(-50%, 20px); opacity: 0; background: #1e293b; border: 1px solid var(--card-border); color: #fff; padding: 10px 16px; border-radius: 8px; font-size: 11px; transition: all 0.25s ease; pointer-events: none; z-index: 2000; }
+    .toast { position: fixed; bottom: 20px; left: 50%; transform: translate(-50%, 20px); opacity: 0; background: #1e293b; border: 1px solid var(--card-border); color: #fff; padding: 12px 20px; border-radius: 8px; font-size: 12px; transition: all 0.25s ease; pointer-events: none; z-index: 2000; box-shadow: 0 10px 25px rgba(0,0,0,0.4); }
     .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
     @media(min-width: 768px) {
@@ -601,7 +605,7 @@
       if (!el) return;
       el.textContent = msg; 
       el.classList.add("show");
-      setTimeout(() => el.classList.remove("show"), 3000);
+      setTimeout(() => el.classList.remove("show"), 3500);
     }
 
     // NAVEGAÇÃO DE ABAS
@@ -646,18 +650,21 @@
       $("auth-switch-mode").textContent = isRegisterMode ? "Já tem conta? Entrar" : "Não tem conta? Cadastre-se";
     });
 
-    // FLUXO DE AUTENTICAÇÃO (LOGIN / CADASTRO COM CORREÇÃO DE RESPOSTA DO BOTÃO)
+    // FLUXO DE AUTENTICAÇÃO (LOGIN / CADASTRO COM MENSAGENS CLARAS)
     $("auth-form").addEventListener("submit", async e => {
       e.preventDefault();
       const email = $("auth-email").value.trim().toLowerCase();
       const pass = $("auth-pass").value.trim();
+      const submitBtn = $("auth-submit-btn");
 
       if (!email || !pass) {
-        showToast("Preencha todos os campos.");
+        showToast("Preencha o e-mail e a senha.");
         return;
       }
 
-      showToast("Processando...");
+      // Feedback visual no botão
+      submitBtn.textContent = "Processando...";
+      submitBtn.style.background = "#10b981";
 
       try {
         const usersSnapshot = await db.collection("users_status").get();
@@ -669,9 +676,11 @@
 
         if (isRegisterMode) {
           if (docSnap.exists) { 
-            showToast("Este e-mail já está cadastrado."); 
+            showToast("Este e-mail já foi cadastrado no sistema!"); 
+            resetBtn(submitBtn);
             return; 
           }
+          
           await userRef.set({
             email, 
             pass,
@@ -681,43 +690,54 @@
           });
           
           if (isFirstUser) {
-            showToast("Conta Admin criada! Entrando...");
+            showToast("Primeiro acesso! Conta Admin criada com sucesso.");
             currentUser = email;
             isAdmin = true;
             finishLogin();
           } else {
-            showToast("Cadastro realizado! Aguarde a liberação.");
+            showToast("Cadastro realizado com sucesso! Aguarde a liberação do administrador.");
             isRegisterMode = false;
             $("auth-switch-mode").click();
+            resetBtn(submitBtn);
           }
           return;
         }
 
-        // Login
+        // Fluxo de Login
         if (!docSnap.exists) { 
-          showToast("Usuário não encontrado. Cadastre-se primeiro."); 
+          showToast("Este e-mail não está cadastrado. Faça o cadastro primeiro!"); 
+          resetBtn(submitBtn);
           return; 
         }
 
         const data = docSnap.data();
         if (data.pass !== pass) { 
-          showToast("Senha incorreta."); 
+          showToast("Senha incorreta. Verifique os dados."); 
+          resetBtn(submitBtn);
           return; 
         }
         if (!data.approved) { 
-          showToast("Acesso pendente de aprovação pelo Administrador."); 
+          showToast("Sua conta aguarda aprovação do Administrador."); 
+          resetBtn(submitBtn);
           return; 
         }
 
         currentUser = email;
         isAdmin = data.isAdmin || false;
+        showToast("Login efetuado com sucesso!");
         finishLogin();
 
       } catch (err) {
         console.error("Erro no Firebase:", err);
-        showToast("Erro de conexão com o Firebase.");
+        showToast("Erro de conexão. Verifique sua internet.");
+        resetBtn(submitBtn);
       }
     });
+
+    function resetBtn(btn) {
+      btn.textContent = isRegisterMode ? "Cadastrar →" : "Entrar →";
+      btn.style.background = "var(--accent)";
+    }
 
     function finishLogin() {
       $("auth-screen").style.display = "none";
@@ -725,7 +745,6 @@
       $("sidebar-user-email").textContent = currentUser;
       if (isAdmin) $("admin-section").style.display = "block";
       initAppListeners();
-      showToast("Bem-vindo ao sistema!");
     }
 
     $("logout-btn").addEventListener("click", () => location.reload());
