@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#090d16">
   <meta name="description" content="Seu controle financeiro simples, moderno e organizado.">
   <meta name="mobile-web-app-capable" content="yes">
@@ -40,6 +40,55 @@
       font-family: 'DM Sans', sans-serif;
       overflow-x: hidden;
     }
+
+    /* TELA DE LOGIN */
+    #login-screen {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      display: grid;
+      place-items: center;
+      z-index: 9999;
+      padding: 20px;
+    }
+
+    .login-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 32px;
+      width: min(400px, 100%);
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+    }
+
+    .login-card h2 { font: 800 24px 'Manrope', sans-serif; margin: 0 0 8px; }
+    .login-card p { font-size: 12px; color: var(--text-muted); margin: 0 0 24px; }
+    .login-card label { display: block; font-size: 11px; font-weight: 700; color: var(--text-muted); margin: 14px 0 6px; }
+    .login-card input {
+      width: 100%;
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 12px;
+      font: 500 13px 'DM Sans', sans-serif;
+      color: var(--text-main);
+      background: var(--navy);
+      outline: none;
+    }
+    .login-card input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2); }
+    .login-btn {
+      margin-top: 24px;
+      width: 100%;
+      border: 0;
+      border-radius: 10px;
+      background: var(--accent);
+      color: #fff;
+      padding: 14px;
+      font: 700 12px 'DM Sans', sans-serif;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .login-btn:hover { opacity: 0.9; }
+    .login-hint { text-align: center; font-size: 10px; color: var(--text-muted); margin-top: 16px; }
 
     .app-shell { min-height: 100vh; display: flex; }
 
@@ -567,6 +616,23 @@
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 </head>
 <body>
+
+  <!-- TELA DE LOGIN -->
+  <div id="login-screen">
+    <div class="login-card">
+      <h2>Entrar no Sistema</h2>
+      <p>Digite suas credenciais para acessar o controle financeiro.</p>
+      <form id="login-form">
+        <label for="login-email">E-mail</label>
+        <input id="login-email" type="email" placeholder="admin@admin.com" required>
+        <label for="login-pass">Senha</label>
+        <input id="login-pass" type="password" placeholder="••••••" required>
+        <button class="login-btn" type="submit">Entrar no sistema →</button>
+      </form>
+      <div class="login-hint">Padrão: admin@admin.com / senha123</div>
+    </div>
+  </div>
+
   <header class="mobile-header">
     <div class="brand" style="padding:0">
       <div class="brand-mark">R$</div>
@@ -589,12 +655,12 @@
           <span class="status-dot"></span>
           <div><b>Seus dados</b><small id="sync-status">Salvos neste aparelho</small></div>
         </div>
-        <small class="version">MEU CONTROLE • 2.1</small>
+        <small class="version">MEU CONTROLE • 2.2</small>
       </div>
     </aside>
 
     <main class="main" id="inicio">
-      <!-- Banner para instalação no celular (só exibe na 1ª vez) -->
+      <!-- Banner para instalação no celular (exibe enquanto não estiver instalado no modo app) -->
       <div class="pwa-banner" id="pwa-banner" style="display: none;">
         <div class="pwa-banner-text">
           <b>Instalar o aplicativo no celular?</b>
@@ -746,12 +812,10 @@
   <div class="toast" id="toast" role="status"></div>
 
   <script>
-    const STORAGE_KEY = "meu-controle-financeiro-v3";
-    const PWA_INSTALLED_KEY = "meu-controle-pwa-prompt-done";
+    const STORAGE_KEY = "meu-controle-financeiro-v4";
     const COLORS = ["#818cf8","#10b981","#f59e0b","#ef4444","#3b82f6","#a855f7","#14b8a6","#64748b","#f97316","#84cc16"];
     const categories = ["Alimentação","Combustível","Gastos pessoais","Moradia","Saúde","Transporte","Educação","Lazer","Contas","Outros"];
     
-    // Registra o Plugin DataLabels do Chart.js
     if (window.ChartDataLabels) {
       Chart.register(ChartDataLabels);
     }
@@ -766,12 +830,25 @@
     const dateLabel = value => new Date(value+"T12:00:00").toLocaleDateString("pt-BR");
     const currentMonth = today().slice(0,7);
 
-    // Gestão de Instalação PWA (Apenas Primeira Vez)
+    // Sistema de Login fixo
+    $("login-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const email = $("login-email").value.trim();
+      const pass = $("login-pass").value.trim();
+      if (email === "admin@admin.com" && pass === "123") {
+        $("login-screen").style.display = "none";
+        showToast("Bem-vindo de volta!");
+      } else {
+        showToast("E-mail ou senha incorretos.");
+      }
+    });
+
+    // Verificação de Instalação PWA Real (Exibe sempre que não estiver instalado no aparelho)
     window.addEventListener("beforeinstallprompt", (e) => {
       e.preventDefault();
       deferredPrompt = e;
-      const isDismissedOrInstalled = localStorage.getItem(PWA_INSTALLED_KEY);
-      if (!isDismissedOrInstalled) {
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+      if (!isStandalone) {
         $("pwa-banner").style.display = "flex";
       }
     });
@@ -781,16 +858,14 @@
         deferredPrompt.prompt();
         const { outcome } = await deferredPrompt.userChoice;
         if (outcome === "accepted") {
-          showToast("Obrigado por instalar o aplicativo!");
+          showToast("Aplicativo instalado com sucesso!");
+          $("pwa-banner").style.display = "none";
         }
         deferredPrompt = null;
       }
-      localStorage.setItem(PWA_INSTALLED_KEY, "true");
-      $("pwa-banner").style.display = "none";
     });
 
     $("dismiss-pwa-btn")?.addEventListener("click", () => {
-      localStorage.setItem(PWA_INSTALLED_KEY, "true");
       $("pwa-banner").style.display = "none";
     });
 
@@ -886,7 +961,6 @@
     }
 
     function renderChart(expenses) {
-      // Agrupa os valores corretamente por cada categoria
       const totals = {};
       expenses.forEach(t => {
         totals[t.category] = (totals[t.category] || 0) + t.amount;
@@ -917,9 +991,7 @@
           responsive: true,
           maintainAspectRatio: false,
           cutout: "68%",
-          layout: {
-            padding: 18
-          },
+          layout: { padding: 18 },
           plugins: {
             legend: { display: false },
             tooltip: {
@@ -927,13 +999,12 @@
                 label: ctx => ` ${ctx.label}: ${money(ctx.raw)} (${Math.round((ctx.raw / grandTotal) * 100)}%)`
               }
             },
-            // Configuração dos Marcadores Visuais nas fatias
             datalabels: {
               color: "#ffffff",
               font: { weight: "bold", size: 10, family: "DM Sans" },
               formatter: (val, ctx) => {
                 const pct = Math.round((val / grandTotal) * 100);
-                if (pct < 4) return ""; // oculta em fatias extremamente pequenas para não sobrepor
+                if (pct < 3) return "";
                 return `${ctx.chart.data.labels[ctx.dataIndex]}\n${pct}%`;
               },
               textAlign: "center",
@@ -941,8 +1012,8 @@
               align: "start",
               offset: 2,
               borderRadius: 6,
-              backgroundColor: "rgba(15, 23, 42, 0.8)",
-              padding: { top: 3, bottom: 3, left: 6, right: 6 }
+              backgroundColor: "rgba(15, 23, 42, 0.85)",
+              padding: { top: 4, bottom: 4, left: 6, right: 6 }
             }
           }
         }
@@ -1011,4 +1082,3 @@
   </script>
 </body>
 </html>
-```eof
