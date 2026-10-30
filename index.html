@@ -149,7 +149,7 @@
     .panel-heading p { font-size: 10px; color: var(--text-muted); margin: 2px 0 0; }
     .mini-tag { font-size: 8px; letter-spacing: 0.5px; color: var(--accent); background: rgba(99,102,241,0.1); padding: 3px 6px; border-radius: 4px; font-weight: 700; }
 
-    .chart-wrap { height: 180px; width: 100%; margin: 10px auto 2px; position: relative; }
+    .chart-wrap { height: 200px; width: 100%; margin: 10px auto 2px; position: relative; }
     .chart-center { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; pointer-events: none; }
     .chart-center strong { font: 800 13px 'Manrope', sans-serif; }
     .chart-center small { font-size: 7px; letter-spacing: 0.5px; color: var(--text-muted); margin-top: 1px; }
@@ -174,6 +174,16 @@
     .progress-track { height: 6px; border-radius: 6px; background: rgba(255,255,255,0.05); overflow: hidden; }
     .progress-fill { height: 100%; width: 0%; background: var(--green); border-radius: 6px; }
     .helper-note { font-size: 9px; line-height: 1.3; color: var(--text-muted); margin: 10px 0 0; }
+
+    /* EXTRATO NA VISÃO GERAL */
+    .mini-extrato { margin-top: 14px; }
+    .extrato-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 11px; }
+    .extrato-left { display: flex; align-items: center; gap: 8px; }
+    .extrato-icon { width: 22px; height: 22px; border-radius: 6px; display: grid; place-items: center; font-size: 10px; font-weight: 700; }
+    .extrato-icon.income { background: var(--green-glow); color: var(--green); }
+    .extrato-icon.expense { background: var(--red-glow); color: var(--red); }
+    .extrato-title { font-weight: 600; color: var(--text-main); display: block; }
+    .extrato-sub { font-size: 8px; color: var(--text-muted); display: block; }
 
     .history-panel { margin-top: 16px; }
     .history-heading { align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }
@@ -390,28 +400,24 @@
         <section class="content-grid">
           <article class="panel chart-panel">
             <div class="panel-heading">
-              <div><h2>Despesas por Categoria</h2><p>Gastos do mês atual.</p></div>
-              <span class="mini-tag">DIVISÃO</span>
+              <div><h2>Orçamento & Gastos</h2><p>Receita base e categorias.</p></div>
+              <span class="mini-tag">ROSCA</span>
             </div>
             <div class="chart-wrap">
               <canvas id="expense-chart"></canvas>
-              <div class="chart-center"><strong id="chart-total">R$ 0</strong><small>DESPESAS</small></div>
+              <div class="chart-center"><strong id="chart-total">R$ 0</strong><small>RESTANTE</small></div>
             </div>
-            <div class="legend" id="chart-legend"><div class="empty-legend">Suas categorias aparecerão aqui.</div></div>
+            <div class="legend" id="chart-legend"><div class="empty-legend">Adicione receitas e despesas.</div></div>
           </article>
 
           <article class="panel payment-panel">
             <div class="panel-heading">
-              <div><h2>Situação das Despesas</h2><p>Pago e pendente.</p></div>
-              <span class="mini-tag">RESUMO</span>
+              <div><h2>Extrato Rápido</h2><p>Últimos lançamentos do mês.</p></div>
+              <span class="mini-tag">EXTRATO</span>
             </div>
-            <div class="payment-summary">
-              <div class="payment-box paid-box"><span class="payment-symbol">✓</span><small>Pago</small><strong id="paid-total">R$ 0,00</strong></div>
-              <div class="payment-box pending-box"><span class="payment-symbol">◷</span><small>Pendente</small><strong id="pending-total">R$ 0,00</strong></div>
+            <div class="mini-extrato" id="mini-extrato-list">
+              <div style="text-align:center; padding:15px; color:var(--text-muted); font-size:11px;">Nenhum lançamento recente.</div>
             </div>
-            <div class="progress-heading"><span>Quitadas</span><b id="paid-percent">0%</b></div>
-            <div class="progress-track"><div class="progress-fill" id="paid-progress"></div></div>
-            <p class="helper-note">Como Administrador, você pode dar baixa ou excluir itens na aba de Lançamentos.</p>
           </article>
         </section>
       </div>
@@ -502,7 +508,7 @@
           <div>
             <p class="eyebrow">HISTÓRICO COMPLETO</p>
             <h1>Lançamentos</h1>
-            <p class="subheading">Gerencie pagamentos e transações.</p>
+            <p class="subheading">Visualize todas as despesas e receitas.</p>
           </div>
         </header>
 
@@ -629,7 +635,7 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    const COLORS = ["#818cf8","#10b981","#f59e0b","#ef4444","#3b82f6","#a855f7","#14b8a6","#64748b","#f97316","#84cc16"];
+    const COLORS = ["#818cf8","#f59e0b","#ef4444","#3b82f6","#a855f7","#14b8a6","#64748b","#f97316","#84cc16"];
     const categories = ["Alimentação","Combustível","Gastos pessoais","Moradia","Saúde","Transporte","Educação","Lazer","Contas","Outros"];
     if (window.ChartDataLabels) Chart.register(ChartDataLabels);
 
@@ -659,7 +665,6 @@
       setTimeout(() => el.classList.remove("show"), 3500);
     }
 
-    // BOTÃO DE OCULTAR / COLAPSAR OS CARDS DE SALDO
     $("toggle-visibility-btn").addEventListener("click", () => {
       valuesHidden = !valuesHidden;
       $("summary-grid-cards").classList.toggle("hidden-values", valuesHidden);
@@ -667,7 +672,6 @@
       showToast(valuesHidden ? "Cards ocultados. O gráfico subiu." : "Cards visíveis.");
     });
 
-    // CONTROLE DA GAVETA
     function openDrawer() {
       $("sidebar").classList.add("open");
       $("sidebar-overlay").classList.add("active");
@@ -697,7 +701,6 @@
       });
     });
 
-    // PWA PROMPT
     window.addEventListener("beforeinstallprompt", (e) => {
       e.preventDefault();
       deferredPrompt = e;
@@ -725,7 +728,6 @@
       $("auth-switch-mode").textContent = isRegisterMode ? "Já tem conta? Entrar" : "Não tem conta? Cadastre-se";
     });
 
-    // AUTENTICAÇÃO COM LEITURA CORRETA DO ADMIN DO FIREBASE
     $("auth-form").addEventListener("submit", async e => {
       e.preventDefault();
       const email = $("auth-email").value.trim().toLowerCase();
@@ -924,7 +926,6 @@
       });
     }
 
-    // CHAT WIDGET
     $("chat-toggle-btn").addEventListener("click", () => {
       chatOpen = !chatOpen;
       $("chat-box").style.display = chatOpen ? "flex" : "none";
@@ -1132,22 +1133,28 @@
       $("paid-total").textContent = money(paid);
       $("pending-total").textContent = money(pending);
 
-      const percent = expenses ? Math.round((paid / expenses) * 100) : 0;
-      $("paid-percent").textContent = percent + "%";
-      $("paid-progress").style.width = percent + "%";
-      $("chart-total").textContent = money(expenses).replace(",00","");
+      const restante = income - expenses;
+      $("chart-total").textContent = money(restante).replace(",00","");
 
-      renderChart(monthTransactions.filter(t => t.type === "expense"));
+      renderBudgetChart(income, monthTransactions.filter(t => t.type === "expense"));
+      renderMiniExtrato(monthTransactions);
       renderCategoryOptions();
       renderHistory();
     }
 
-    function renderChart(expenses) {
-      const totals = {};
-      expenses.forEach(t => { totals[t.category] = (totals[t.category] || 0) + t.amount; });
-      const labels = Object.keys(totals);
-      const values = Object.values(totals);
-      const grandTotal = values.reduce((a, b) => a + b, 0);
+    // GRÁFICO DE ROSCA COM BASE NA RECEITA (VERDE + CATEGORIAS)
+    function renderBudgetChart(totalIncome, expenses) {
+      const catTotals = {};
+      let totalExpense = 0;
+      expenses.forEach(t => { 
+        catTotals[t.category] = (catTotals[t.category] || 0) + t.amount; 
+        totalExpense += t.amount;
+      });
+
+      const restante = Math.max(0, totalIncome - totalExpense);
+      const labels = ["Disponível / Receita", ...Object.keys(catTotals)];
+      const values = [restante, ...Object.values(catTotals)];
+      const bgColors = ["#10b981", ...Object.keys(catTotals).map((cat, i) => COLORS[categories.indexOf(cat) % COLORS.length] || COLORS[i % COLORS.length])];
 
       if (chart) chart.destroy();
 
@@ -1157,7 +1164,7 @@
           labels,
           datasets: [{
             data: values,
-            backgroundColor: labels.map((cat, i) => COLORS[categories.indexOf(cat) % COLORS.length] || COLORS[i % COLORS.length]),
+            backgroundColor: bgColors,
             borderWidth: 2, borderColor: "#111827"
           }]
         },
@@ -1167,8 +1174,9 @@
             legend: { display: false },
             datalabels: {
               color: "#fff", font: { weight: "bold", size: 9 },
-              formatter: (val) => {
-                const pct = Math.round((val / grandTotal) * 100);
+              formatter: (val, ctx) => {
+                if (totalIncome <= 0) return "";
+                const pct = Math.round((val / totalIncome) * 100);
                 return pct < 4 ? "" : `${pct}%`;
               }
             }
@@ -1176,9 +1184,35 @@
         }
       });
 
-      $("chart-legend").innerHTML = labels.length ? labels.map((label, i) => `
-        <div class="legend-item"><span class="legend-dot" style="background:${COLORS[categories.indexOf(label) % COLORS.length]}"></span><span>${escapeHtml(label)}</span><b>${money(values[i])}</b></div>
-      `).join("") : '<div class="empty-legend">Sem categorias.</div>';
+      let legendHTML = `<div class="legend-item"><span class="legend-dot" style="background:#10b981"></span><span>Disponível</span><b>${money(restante)}</b></div>`;
+      Object.keys(catTotals).forEach((cat, i) => {
+        legendHTML += `<div class="legend-item"><span class="legend-dot" style="background:${bgColors[i+1]}"></span><span>${escapeHtml(cat)}</span><b>${money(catTotals[cat])}</b></div>`;
+      });
+      $("chart-legend").innerHTML = legendHTML;
+    }
+
+    // EXTRATO RÁPIDO NA VISÃO GERAL
+    function renderMiniExtrato(monthTransactions) {
+      const container = $("mini-extrato-list");
+      const recent = monthTransactions.slice(0, 5); // Mostra os 5 mais recentes
+
+      if (!recent.length) {
+        container.innerHTML = '<div style="text-align:center; padding:15px; color:var(--text-muted); font-size:11px;">Nenhum lançamento recente.</div>';
+        return;
+      }
+
+      container.innerHTML = recent.map(t => `
+        <div class="extrato-item">
+          <div class="extrato-left">
+            <span class="extrato-icon ${t.type}">${t.type === 'income' ? '↗' : '↘'}</span>
+            <div>
+              <span class="extrato-title">${escapeHtml(t.name)}</span>
+              <span class="extrato-sub">${escapeHtml(t.category)} • ${new Date(t.date+"T12:00:00").toLocaleDateString("pt-BR")}</span>
+            </div>
+          </div>
+          <b class="${t.type === 'income' ? 'green-text' : 'red-text'}">${t.type === 'income' ? '+' : '−'} ${money(t.amount)}</b>
+        </div>
+      `).join("");
     }
 
     function renderCategoryOptions() {
