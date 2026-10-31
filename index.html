@@ -91,6 +91,7 @@
       <div id="drawer-admin-config" class="hidden bg-emerald-50 border border-emerald-200 p-3.5 rounded-2xl space-y-3">
         <span class="font-bold text-emerald-900 text-xs uppercase tracking-wider block">Gerenciar Finanças</span>
         
+        <!-- Renda Principal -->
         <div class="space-y-1.5">
           <label class="text-[11px] font-semibold text-emerald-800 block">Renda Principal:</label>
           <div class="flex gap-1.5">
@@ -99,6 +100,26 @@
           </div>
         </div>
 
+        <!-- Meta/Depósito da Poupança -->
+        <div class="space-y-1.5 border-t border-emerald-200 pt-2">
+          <label class="text-[11px] font-semibold text-emerald-800 block">Poupança / Meta Mensal (R$):</label>
+          <div class="flex gap-1.5">
+            <input type="number" step="0.01" id="input-poupanca-meta" placeholder="Depósito Mês (R$)" class="w-full p-2 border border-emerald-300 rounded-xl bg-white text-xs">
+            <button type="button" onclick="salvarMetaPoupanca()" class="bg-indigo-600 text-white px-3 py-2 rounded-xl text-xs font-semibold shrink-0">Registrar</button>
+          </div>
+        </div>
+
+        <!-- Cadastrar Nova Dívida / Empréstimo -->
+        <div class="space-y-1.5 border-t border-emerald-200 pt-2">
+          <label class="text-[11px] font-semibold text-emerald-800 block">Cadastrar Empréstimo / Dívida:</label>
+          <input type="text" id="divida-nome" placeholder="Credor (Ex: João / Banco)" class="w-full p-2 border border-emerald-300 rounded-xl bg-white text-xs">
+          <div class="flex gap-1.5">
+            <input type="number" step="0.01" id="divida-valor-total" placeholder="Valor Total (R$)" class="w-full p-2 border border-emerald-300 rounded-xl bg-white text-xs">
+            <button type="button" onclick="adicionarDivida()" class="bg-rose-600 text-white px-3 py-2 rounded-xl text-xs font-semibold shrink-0">Criar</button>
+          </div>
+        </div>
+
+        <!-- Renda Extra -->
         <div class="space-y-1.5 border-t border-emerald-200 pt-2">
           <label class="text-[11px] font-semibold text-emerald-800 block">Adicionar Renda Extra:</label>
           <input type="text" id="extra-nome" placeholder="Descrição (Ex: Corrida)" class="w-full p-2 border border-emerald-300 rounded-xl bg-white text-xs">
@@ -108,6 +129,7 @@
           </div>
         </div>
 
+        <!-- Despesa Fixa -->
         <div class="border-t border-emerald-200 pt-2 space-y-1.5">
           <label class="text-[11px] font-semibold text-emerald-800 block">Adicionar Despesa Fixa:</label>
           <input type="text" id="fixa-nome" placeholder="Nome (Ex: Aluguel)" class="w-full p-2 border border-emerald-300 rounded-xl bg-white text-xs">
@@ -118,7 +140,7 @@
         </div>
       </div>
 
-      <!-- Receita Total Visível para Usuário no Menu -->
+      <!-- Receita Total Visível no Menu -->
       <div id="drawer-receita-card" class="bg-emerald-50 border border-emerald-200 p-3.5 rounded-2xl space-y-2">
         <div>
           <span class="font-bold text-emerald-800 text-xs uppercase tracking-wider block">Receita Total do Mês</span>
@@ -129,7 +151,10 @@
 
       <div>
         <span class="font-bold text-slate-400 uppercase tracking-wider block mb-1 text-xs">Mês Selecionado</span>
-        <div id="drawer-mes-atual" class="p-3 bg-blue-50 border border-blue-200 rounded-xl font-bold text-blue-900 text-xs"></div>
+        <div id="drawer-mes-atual" class="p-3 bg-blue-50 border border-blue-200 rounded-xl font-bold text-blue-900 text-xs flex justify-between items-center">
+          <span id="txt-mes-selecionado">--</span>
+          <span id="badge-mes-status" class="text-[10px] bg-blue-200 text-blue-800 px-2 py-0.5 rounded-full font-semibold">Atual</span>
+        </div>
       </div>
 
       <div>
@@ -263,19 +288,46 @@
     <!-- Dashboard Principal -->
     <div id="sec-dashboard" class="hidden space-y-5">
 
-      <!-- Cards de Resumo Lado a Lado (Admin vê 2, Usuário comum vê apenas o saldo/disponível) -->
-      <div id="cards-resumo-container" class="grid grid-cols-2 gap-3">
-        <div id="card-despesas-box" class="bg-white p-4 rounded-3xl shadow-sm border border-slate-200 border-l-4 border-l-rose-500">
-          <span class="text-xs text-slate-500 font-medium block truncate">Despesas do Mês</span>
-          <div class="text-lg sm:text-2xl font-extrabold text-slate-800 mt-1 truncate" id="val-despesas">R$ 0,00</div>
+      <!-- Banner de Visualização do Mês Selecionado -->
+      <div id="banner-mes-historico" class="hidden bg-amber-100 border border-amber-300 text-amber-900 p-3 rounded-2xl flex justify-between items-center text-xs">
+        <div>
+          <span>Você está navegando pelo mês de: <strong id="txt-nome-mes-historico"></strong></span>
         </div>
-        <div class="bg-white p-4 rounded-3xl shadow-sm border border-slate-200 border-l-4 border-l-blue-600">
-          <span class="text-xs text-slate-500 font-medium block truncate">Saldo Restante</span>
-          <div class="text-lg sm:text-2xl font-extrabold text-slate-800 mt-1 truncate" id="val-saldo">R$ 0,00</div>
+        <button onclick="voltarParaMesAtual()" class="bg-amber-800 text-white px-3 py-1.5 rounded-xl font-bold hover:bg-amber-900 shrink-0">
+          Voltar ao Mês Atual
+        </button>
+      </div>
+
+      <!-- Cards de Resumo Lado a Lado -->
+      <div id="cards-resumo-container" class="grid grid-cols-3 gap-2.5 sm:gap-3">
+        <div id="card-despesas-box" class="bg-white p-3.5 sm:p-4 rounded-3xl shadow-sm border border-slate-200 border-l-4 border-l-rose-500">
+          <span class="text-[11px] sm:text-xs text-slate-500 font-medium block truncate">Despesas do Mês</span>
+          <div class="text-base sm:text-xl font-extrabold text-slate-800 mt-1 truncate" id="val-despesas">R$ 0,00</div>
+        </div>
+        
+        <div class="bg-white p-3.5 sm:p-4 rounded-3xl shadow-sm border border-slate-200 border-l-4 border-l-blue-600">
+          <span class="text-[11px] sm:text-xs text-slate-500 font-medium block truncate">Saldo Restante</span>
+          <div class="text-base sm:text-xl font-extrabold text-slate-800 mt-1 truncate" id="val-saldo">R$ 0,00</div>
+        </div>
+
+        <div class="bg-white p-3.5 sm:p-4 rounded-3xl shadow-sm border border-slate-200 border-l-4 border-l-indigo-600">
+          <span class="text-[11px] sm:text-xs text-indigo-600 font-medium block truncate">Poupança Total</span>
+          <div class="text-base sm:text-xl font-extrabold text-indigo-900 mt-1 truncate" id="val-poupanca-total">R$ 0,00</div>
+          <span class="text-[10px] text-slate-400 block truncate mt-0.5" id="val-poupanca-mes">+R$ 0,00 este mês</span>
         </div>
       </div>
 
-      <!-- Formulário de Lançamento de Gasto Diário (Disponível para todos) -->
+      <!-- Seção de Empréstimos e Dívidas Ativas -->
+      <section class="bg-white p-5 rounded-3xl shadow-sm border border-slate-200 text-sm space-y-3">
+        <div class="flex justify-between items-center">
+          <h3 class="font-bold text-slate-800 text-base">Controle de Dívidas & Empréstimos</h3>
+        </div>
+        <div id="lista-dividas" class="space-y-2.5">
+          <!-- Lista de dívidas gerada dinamicamente -->
+        </div>
+      </section>
+
+      <!-- Formulário de Lançamento de Gasto Diário -->
       <section class="bg-white p-5 rounded-3xl shadow-sm border border-slate-200 text-sm">
         <h3 class="font-bold text-slate-800 mb-3 text-base">Lançar Novo Gasto / Despesa Diária</h3>
         <form onsubmit="adicionarGasto(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -290,7 +342,7 @@
       <!-- Gráfico e Histórico -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-200 flex flex-col justify-between">
-          <h3 class="text-sm font-bold text-slate-800 mb-2">Distribuição de Despesas & Orçamento</h3>
+          <h3 class="text-sm font-bold text-slate-800 mb-2">Distribuição de Despesas & Poupança</h3>
           <div class="relative w-full h-56 flex justify-center items-center">
             <canvas id="chartDespesas"></canvas>
           </div>
@@ -312,10 +364,11 @@
     let currentUser = JSON.parse(localStorage.getItem('pwa_user')) || null;
     let chartInstance = null;
     let deferredPrompt = null;
-    let appData = { receitas: {}, rendasExtras: {}, gastos: [], mensagens: [], usuarios: [], despesasFixas: {} };
+    let appData = { receitas: {}, rendasExtras: {}, gastos: [], mensagens: [], usuarios: [], despesasFixas: {}, poupancas: {}, dividas: [], pagamentosDividas: {} };
     
     const dataAtualObj = new Date();
-    let mesSelecionado = `${dataAtualObj.getFullYear()}-${String(dataAtualObj.getMonth() + 1).padStart(2, '0')}`;
+    const mesAtualReal = `${dataAtualObj.getFullYear()}-${String(dataAtualObj.getMonth() + 1).padStart(2, '0')}`;
+    let mesSelecionado = mesAtualReal;
 
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
@@ -482,13 +535,13 @@
       if (isAdmin) {
         document.getElementById('drawer-admin-config').classList.remove('hidden');
         document.getElementById('drawer-admin-usuarios').classList.remove('hidden');
-        document.getElementById('drawer-receita-card').classList.add('hidden');
         document.getElementById('card-despesas-box').classList.remove('hidden');
-        document.getElementById('cards-resumo-container').className = "grid grid-cols-2 gap-3";
+        document.getElementById('cards-resumo-container').className = "grid grid-cols-3 gap-2.5 sm:gap-3";
       } else {
-        document.getElementById('drawer-receita-card').classList.remove('hidden');
+        document.getElementById('drawer-admin-config').classList.add('hidden');
+        document.getElementById('drawer-admin-usuarios').classList.add('hidden');
         document.getElementById('card-despesas-box').classList.add('hidden');
-        document.getElementById('cards-resumo-container').className = "grid grid-cols-1 gap-3";
+        document.getElementById('cards-resumo-container').className = "grid grid-cols-2 gap-3";
       }
       ouvirDadosFirebase();
     }
@@ -503,6 +556,9 @@
           appData.receitas = dados.receitas || {};
           appData.rendasExtras = dados.rendasExtras || {};
           appData.despesasFixas = dados.despesasFixas || {};
+          appData.poupancas = dados.poupancas || {};
+          appData.dividas = dados.dividas || [];
+          appData.pagamentosDividas = dados.pagamentosDividas || {};
           renderUI();
         }
       });
@@ -537,29 +593,57 @@
       });
     }
 
+    function formatarMesExtenso(mesAnoStr) {
+      const [ano, mes] = mesAnoStr.split('-');
+      const nomeMes = new Date(ano, mes - 1).toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+      return nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1);
+    }
+
+    function voltarParaMesAtual() {
+      mesSelecionado = mesAtualReal;
+      atualizarMenuLateralMeses();
+      renderUI();
+    }
+
     function atualizarMenuLateralMeses() {
       const listaMesesDiv = document.getElementById('drawer-lista-meses');
-      const mesAtualDiv = document.getElementById('drawer-mes-atual');
+      const mesAtualDiv = document.getElementById('txt-mes-selecionado');
+      const badgeStatus = document.getElementById('badge-mes-status');
       if (!listaMesesDiv) return;
 
       const mesesSet = new Set();
+      mesesSet.add(mesAtualReal);
       mesesSet.add(mesSelecionado);
       appData.gastos.forEach(g => { if (g.mesAno) mesesSet.add(g.mesAno); });
+      Object.keys(appData.poupancas || {}).forEach(m => mesesSet.add(m));
+      Object.keys(appData.pagamentosDividas || {}).forEach(m => mesesSet.add(m));
 
       const mesesOrdenados = Array.from(mesesSet).sort().reverse();
       listaMesesDiv.innerHTML = '';
 
+      if (mesAtualDiv) mesAtualDiv.innerText = formatarMesExtenso(mesSelecionado);
+      if (badgeStatus) {
+        badgeStatus.innerText = (mesSelecionado === mesAtualReal) ? "Atual" : "Histórico";
+        badgeStatus.className = (mesSelecionado === mesAtualReal) 
+          ? "text-[10px] bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded-full font-semibold" 
+          : "text-[10px] bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full font-semibold";
+      }
+
       mesesOrdenados.forEach(m => {
-        const [ano, mes] = m.split('-');
-        const nomeMes = new Date(ano, mes - 1).toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
-        const textoFormatado = nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1);
-
-        if (m === mesSelecionado) mesAtualDiv.innerText = textoFormatado;
-
+        const textoFormatado = formatarMesExtenso(m);
         const btn = document.createElement('button');
-        btn.className = `w-full text-left p-2.5 rounded-xl font-medium transition text-xs ${m === mesSelecionado ? 'bg-blue-600 text-white font-bold' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`;
-        btn.innerText = textoFormatado;
-        btn.onclick = () => { mesSelecionado = m; fecharMenuLateral(); atualizarMenuLateralMeses(); renderUI(); };
+        const eAtual = (m === mesAtualReal);
+        btn.className = `w-full text-left p-2.5 rounded-xl font-medium transition text-xs flex justify-between items-center ${m === mesSelecionado ? 'bg-blue-600 text-white font-bold' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`;
+        btn.innerHTML = `
+          <span>${textoFormatado}</span>
+          ${eAtual ? '<span class="text-[9px] bg-emerald-500 text-white px-1.5 py-0.5 rounded font-bold">ATUAL</span>' : ''}
+        `;
+        btn.onclick = () => { 
+          mesSelecionado = m; 
+          fecharMenuLateral(); 
+          atualizarMenuLateralMeses(); 
+          renderUI(); 
+        };
         listaMesesDiv.appendChild(btn);
       });
     }
@@ -569,9 +653,93 @@
       if (isNaN(valor)) { mostrarNotificacao("Digite um valor válido para a renda."); return; }
       const { doc, setDoc } = window.firebaseModules;
       appData.receitas[mesSelecionado] = valor;
-      await setDoc(doc(window.db, "financeiro", "config"), { receitas: appData.receitas, rendasExtras: appData.rendasExtras, despesasFixas: appData.despesasFixas }, { merge: true });
+      await salvarConfigFirebase();
       document.getElementById('input-receita').value = '';
       mostrarNotificacao("Renda principal atualizada com sucesso!");
+    }
+
+    async function salvarMetaPoupanca() {
+      const valor = parseFloat(document.getElementById('input-poupanca-meta').value);
+      if (isNaN(valor)) { mostrarNotificacao("Digite um valor válido para o depósito da poupança."); return; }
+      appData.poupancas[mesSelecionado] = valor;
+      await salvarConfigFirebase();
+      document.getElementById('input-poupanca-meta').value = '';
+      mostrarNotificacao(`Depósito de R$ ${valor.toFixed(2)} registrado na poupança para o mês de ${formatarMesExtenso(mesSelecionado)}!`);
+    }
+
+    async function adicionarDivida() {
+      const nome = document.getElementById('divida-nome').value.trim();
+      const valorTotal = parseFloat(document.getElementById('divida-valor-total').value);
+      if (!nome || isNaN(valorTotal)) { mostrarNotificacao("Preencha o credor e o valor total da dívida."); return; }
+
+      if (!appData.dividas) appData.dividas = [];
+      appData.dividas.push({ id: Date.now(), nome, valorTotal });
+
+      await salvarConfigFirebase();
+      document.getElementById('divida-nome').value = '';
+      document.getElementById('divida-valor-total').value = '';
+      mostrarNotificacao("Dívida cadastrada com sucesso!");
+    }
+
+    async function excluirDivida(idDivida) {
+      if (!confirm("Deseja remover esta dívida do painel?")) return;
+      appData.dividas = appData.dividas.filter(d => d.id !== idDivida);
+      await salvarConfigFirebase();
+    }
+
+    async function pagarDividaMes(idDivida) {
+      const divida = appData.dividas.find(d => d.id === idDivida);
+      if (!divida) return;
+
+      const quantoJaPagoTotal = Object.values(appData.pagamentosDividas || {}).reduce((acc, pags) => {
+        const p = pags.find(x => x.idDivida === idDivida);
+        return acc + (p ? p.valor : 0);
+      }, 0);
+
+      const restante = divida.valorTotal - quantoJaPagoTotal;
+      const inputStr = prompt(`Quanto você deseja pagar para "${divida.nome}" neste mês de ${formatarMesExtenso(mesSelecionado)}?\nRestante da dívida: R$ ${restante.toFixed(2)}`, "50");
+      if (!inputStr) return;
+      const valorPago = parseFloat(inputStr);
+
+      if (isNaN(valorPago) || valorPago <= 0) {
+        mostrarNotificacao("Valor inválido.");
+        return;
+      }
+
+      if (!appData.pagamentosDividas[mesSelecionado]) {
+        appData.pagamentosDividas[mesSelecionado] = [];
+      }
+
+      // Verifica se já existe pagamento para essa dívida neste mês
+      const existente = appData.pagamentosDividas[mesSelecionado].find(p => p.idDivida === idDivida);
+      if (existente) {
+        existente.valor += valorPago;
+      } else {
+        appData.pagamentosDividas[mesSelecionado].push({ idDivida, nome: divida.nome, valor: valorPago });
+      }
+
+      await salvarConfigFirebase();
+      mostrarNotificacao(`Pagamento de R$ ${valorPago.toFixed(2)} registrado para ${divida.nome}!`);
+    }
+
+    async function removerPagamentoDividaMes(idDivida) {
+      if (!confirm("Remover o pagamento desta dívida neste mês?")) return;
+      if (appData.pagamentosDividas[mesSelecionado]) {
+        appData.pagamentosDividas[mesSelecionado] = appData.pagamentosDividas[mesSelecionado].filter(p => p.idDivida !== idDivida);
+        await salvarConfigFirebase();
+      }
+    }
+
+    async function salvarConfigFirebase() {
+      const { doc, setDoc } = window.firebaseModules;
+      await setDoc(doc(window.db, "financeiro", "config"), { 
+        receitas: appData.receitas, 
+        rendasExtras: appData.rendasExtras, 
+        despesasFixas: appData.despesasFixas,
+        poupancas: appData.poupancas,
+        dividas: appData.dividas,
+        pagamentosDividas: appData.pagamentosDividas
+      }, { merge: true });
     }
 
     async function adicionarRendaExtra() {
@@ -581,9 +749,7 @@
 
       if (!appData.rendasExtras[mesSelecionado]) appData.rendasExtras[mesSelecionado] = [];
       appData.rendasExtras[mesSelecionado].push({ id: Date.now(), nome, valor });
-
-      const { doc, setDoc } = window.firebaseModules;
-      await setDoc(doc(window.db, "financeiro", "config"), { receitas: appData.receitas, rendasExtras: appData.rendasExtras, despesasFixas: appData.despesasFixas }, { merge: true });
+      await salvarConfigFirebase();
       document.getElementById('extra-nome').value = '';
       document.getElementById('extra-valor').value = '';
       mostrarNotificacao("Renda extra adicionada com sucesso!");
@@ -592,8 +758,7 @@
     async function excluirRendaExtra(idExtra) {
       if (!confirm("Remover esta renda extra?")) return;
       appData.rendasExtras[mesSelecionado] = appData.rendasExtras[mesSelecionado].filter(e => e.id !== idExtra);
-      const { doc, setDoc } = window.firebaseModules;
-      await setDoc(doc(window.db, "financeiro", "config"), { receitas: appData.receitas, rendasExtras: appData.rendasExtras, despesasFixas: appData.despesasFixas }, { merge: true });
+      await salvarConfigFirebase();
     }
 
     async function adicionarDespesaFixa() {
@@ -603,9 +768,7 @@
 
       if (!appData.despesasFixas[mesSelecionado]) appData.despesasFixas[mesSelecionado] = [];
       appData.despesasFixas[mesSelecionado].push({ id: Date.now(), nome, valor });
-
-      const { doc, setDoc } = window.firebaseModules;
-      await setDoc(doc(window.db, "financeiro", "config"), { receitas: appData.receitas, rendasExtras: appData.rendasExtras, despesasFixas: appData.despesasFixas }, { merge: true });
+      await salvarConfigFirebase();
       document.getElementById('fixa-nome').value = '';
       document.getElementById('fixa-valor').value = '';
       mostrarNotificacao("Despesa fixa fixada com sucesso!");
@@ -614,8 +777,7 @@
     async function excluirDespesaFixa(idFixa) {
       if (!confirm("Remover esta despesa fixa?")) return;
       appData.despesasFixas[mesSelecionado] = appData.despesasFixas[mesSelecionado].filter(f => f.id !== idFixa);
-      const { doc, setDoc } = window.firebaseModules;
-      await setDoc(doc(window.db, "financeiro", "config"), { receitas: appData.receitas, rendasExtras: appData.rendasExtras, despesasFixas: appData.despesasFixas }, { merge: true });
+      await salvarConfigFirebase();
     }
 
     async function adicionarGasto(e) {
@@ -721,6 +883,15 @@
     }
 
     function renderUI() {
+      const bannerMesHist = document.getElementById('banner-mes-historico');
+      const txtNomeMesHist = document.getElementById('txt-nome-mes-historico');
+      if (mesSelecionado !== mesAtualReal) {
+        bannerMesHist.classList.remove('hidden');
+        txtNomeMesHist.innerText = formatarMesExtenso(mesSelecionado);
+      } else {
+        bannerMesHist.classList.add('hidden');
+      }
+
       const receitaPrincipal = appData.receitas[mesSelecionado] || 0;
       const extrasMes = appData.rendasExtras[mesSelecionado] || [];
       const totalExtras = extrasMes.reduce((acc, e) => acc + e.valor, 0);
@@ -743,13 +914,66 @@
         });
       }
 
+      // Poupança
+      const poupancaMesAtual = appData.poupancas[mesSelecionado] || 0;
+      const poupancaTotalAcumulada = Object.values(appData.poupancas || {}).reduce((acc, v) => acc + (parseFloat(v) || 0), 0);
+
+      document.getElementById('val-poupanca-total').innerText = `R$ ${poupancaTotalAcumulada.toFixed(2)}`;
+      document.getElementById('val-poupanca-mes').innerText = `+R$ ${poupancaMesAtual.toFixed(2)} este mês`;
+
+      // Renderizar Dívidas e Pagamentos
+      const listaDividasEl = document.getElementById('lista-dividas');
+      const pagamentosMes = appData.pagamentosDividas[mesSelecionado] || [];
+      const totalPagamentosDividasMes = pagamentosMes.reduce((acc, p) => acc + p.valor, 0);
+
+      if (listaDividasEl) {
+        listaDividasEl.innerHTML = '';
+        const dividasArr = appData.dividas || [];
+        const isAdmin = (currentUser.email === ADMIN_EMAIL || currentUser.isAdmin);
+
+        if (dividasArr.length === 0) {
+          listaDividasEl.innerHTML = '<p class="text-xs text-slate-400 italic">Nenhuma dívida cadastrada no momento.</p>';
+        } else {
+          dividasArr.forEach(d => {
+            // Calcula quanto já foi pago no total de todos os meses
+            let pagoTotal = 0;
+            Object.values(appData.pagamentosDividas || {}).forEach(pags => {
+              const pEncontrado = pags.find(x => x.idDivida === d.id);
+              if (pEncontrado) pagoTotal += pEncontrado.valor;
+            });
+
+            const restante = Math.max(0, d.valorTotal - pagoTotal);
+            const pagoNesteMes = (pagamentosMes.find(p => p.idDivida === d.id) || {}).valor || 0;
+
+            const divItem = document.createElement('div');
+            divItem.className = "p-3 bg-slate-50 border rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2";
+            divItem.innerHTML = `
+              <div class="truncate">
+                <span class="font-bold text-slate-800 block truncate">${d.nome}</span>
+                <span class="text-xs text-slate-500 block">Total: R$ ${d.valorTotal.toFixed(2)} | Restante: <strong class="text-rose-600">R$ ${restante.toFixed(2)}</strong></span>
+                ${pagoNesteMes > 0 ? `<span class="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-semibold mt-1 inline-block">Pago R$ ${pagoNesteMes.toFixed(2)} neste mês</span>` : ''}
+              </div>
+              <div class="flex items-center gap-1.5 shrink-0 w-full sm:w-auto justify-end">
+                <button onclick="pagarDividaMes(${d.id})" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-xl text-xs font-semibold">Pagar Parcela</button>
+                ${pagoNesteMes > 0 ? `<button onclick="removerPagamentoDividaMes(${d.id})" class="bg-amber-100 text-amber-800 hover:bg-amber-200 px-2 py-1.5 rounded-xl text-xs font-semibold" title="Desfazer pagamento deste mês">Desfazer</button>` : ''}
+                ${isAdmin ? `<button onclick="excluirDivida(${d.id})" class="text-rose-600 font-bold p-1" title="Excluir dívida">✕</button>` : ''}
+              </div>
+            `;
+            listaDividasEl.appendChild(divItem);
+          });
+        }
+      }
+
+      // Despesas
       const fixasMes = appData.despesasFixas[mesSelecionado] || [];
       const totalFixas = fixasMes.reduce((acc, f) => acc + f.valor, 0);
 
       const gastosMes = appData.gastos.filter(g => g.mesAno === mesSelecionado);
       const totalGastosDiarios = gastosMes.reduce((acc, item) => acc + item.valor, 0);
-      const totalDespesas = totalFixas + totalGastosDiarios;
-      const saldo = receitaTotal - totalDespesas;
+      
+      // Total de despesas inclui fixas, gastos diários e os pagamentos de dívidas do mês
+      const totalDespesas = totalFixas + totalGastosDiarios + totalPagamentosDividasMes;
+      const saldo = receitaTotal - (totalDespesas + poupancaMesAtual);
 
       const valDespesasEl = document.getElementById('val-despesas');
       const valSaldoEl = document.getElementById('val-saldo');
@@ -760,6 +984,31 @@
       const listaEl = document.getElementById('lista-gastos');
       if (listaEl) {
         listaEl.innerHTML = '';
+
+        if (poupancaMesAtual > 0) {
+          const liPoup = document.createElement('li');
+          liPoup.className = "py-3 px-2 flex justify-between items-center border-b border-indigo-100 bg-indigo-50/60 rounded-xl mb-1 text-sm";
+          liPoup.innerHTML = `
+            <div class="truncate mr-2"><span class="font-bold text-indigo-900">Depósito Poupança (Reserva)</span></div>
+            <div class="flex items-center gap-2 shrink-0">
+              <span class="font-semibold text-indigo-700">R$ ${poupancaMesAtual.toFixed(2)}</span>
+            </div>
+          `;
+          listaEl.appendChild(liPoup);
+        }
+
+        // Mostra os pagamentos de dívidas no histórico do mês
+        pagamentosMes.forEach(p => {
+          const liDiv = document.createElement('li');
+          liDiv.className = "py-3 px-2 flex justify-between items-center border-b border-rose-100 bg-rose-50/50 rounded-xl mb-1 text-sm";
+          liDiv.innerHTML = `
+            <div class="truncate mr-2"><span class="font-bold text-rose-900">Abatimento Dívida: ${p.nome}</span></div>
+            <div class="flex items-center gap-2 shrink-0">
+              <span class="font-semibold text-rose-600">- R$ ${p.valor.toFixed(2)}</span>
+            </div>
+          `;
+          listaEl.appendChild(liDiv);
+        });
 
         fixasMes.forEach(f => {
           const li = document.createElement('li');
@@ -823,18 +1072,20 @@
       }
 
       try {
-        renderChart(receitaTotal, totalDespesas, fixasMes, gastosMes);
+        renderChart(receitaTotal, totalDespesas, poupancaMesAtual, pagamentosMes, fixasMes, gastosMes);
       } catch (err) {
         console.error("Erro ao renderizar gráfico:", err);
       }
     }
 
-    function renderChart(receitaTotal, totalDespesas, fixasMes, gastosMes) {
+    function renderChart(receitaTotal, totalDespesas, poupancaMesAtual, pagamentosMes, fixasMes, gastosMes) {
       const canvasEl = document.getElementById('chartDespesas');
       if (!canvasEl) return;
       const ctx = canvasEl.getContext('2d');
 
       const agrupado = {};
+      if (poupancaMesAtual > 0) agrupado['Poupança'] = poupancaMesAtual;
+      pagamentosMes.forEach(p => { agrupado['Dívida: ' + p.nome] = p.valor; });
       fixasMes.forEach(f => { agrupado[f.nome + ' (Fixa)'] = f.valor; });
       gastosMes.forEach(g => { agrupado[g.nome] = (agrupado[g.nome] || 0) + g.valor; });
 
@@ -856,9 +1107,9 @@
       } else {
         chartLabels = [...labels];
         chartData = [...valores];
-        chartColors = ['#ef4444', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#64748b'];
+        chartColors = ['#6366f1', '#f43f5e', '#ef4444', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#64748b'];
 
-        const saldoRestante = receitaTotal - totalDespesas;
+        const saldoRestante = receitaTotal - (totalDespesas + poupancaMesAtual);
         if (saldoRestante > 0) {
           chartLabels.push('Disponível');
           chartData.push(saldoRestante);
